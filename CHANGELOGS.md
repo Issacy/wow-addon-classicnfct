@@ -1,3 +1,6 @@
+#### 2.04:
+* optimize
+
 #### 2.03:
 * pkgmeta fix
 
