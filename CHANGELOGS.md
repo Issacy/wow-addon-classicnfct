@@ -1,3 +1,6 @@
+#### 2.03:
+* pkgmeta fix
+
 #### 2.02:
 * change file structure for auto packaging
 * try to fix nameplate event error

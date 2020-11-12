@@ -1,17 +1,6 @@
 package-as: ClassicNFCT
 enable-nolib-creation: no
 
-Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
-Libs\AceAddon-3.0\AceAddon-3.0.xml
-Libs\AceConsole-3.0\AceConsole-3.0.xml
-Libs\AceDB-3.0\AceDB-3.0.xml
-Libs\AceLocale-3.0\AceLocale-3.0.xml
-Libs\AceGUI-3.0\AceGUI-3.0.xml
-Libs\AceConfig-3.0\AceConfig-3.0.xml
-Libs\AceEvent-3.0\AceEvent-3.0.xml
-Libs\LibSharedMedia-3.0\lib.xml
-Libs\AceGUI-3.0-SharedMediaWidgets\widget.xml
-
 externals:
     Libs/LibStub: https://repos.wowace.com/wow/libstub/trunk
     Libs/CallbackHandler-1.0: https://repos.wowace.com/wow/callbackhandler/trunk/CallbackHandler-1.0
@@ -24,7 +13,7 @@ externals:
     Libs/AceConfig-3.0: https://repos.wowace.com/wow/ace3/trunk/AceConfig-3.0
     Libs/LibSharedMedia-3.0: https://repos.wowace.com/wow/libsharedmedia-3-0/trunk
     Libs/AceGUI-3.0-SharedMediaWidgets: https://repos.wowace.com/wow/ace-gui-3-0-shared-media-widgets/trunk
-    Libs/LibEasing: https://github.com/Mpstark/LibEasing.git
+    Libs/LibEasing:
         url: https://github.com/Mpstark/LibEasing.git
         # if this line is left out, the latest version (even if it's not a tag) is assumed
         # specific an actual tag if you are targeting a specific version.
