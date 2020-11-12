@@ -1,0 +1,25 @@
+## Interface: 90100
+## Version: 2.01
+## Title: ClassicNFCT
+## Author: issacywang
+## SavedVariables: ClassicNFCTDB
+## Notes: Classic nameplate-based floating combat text.
+## Notes-zhCN: 基于姓名版的仿经典浮动战斗数字
+## Notes-zhTW: 基於姓名版的仿經典浮動戰鬥數字
+## OptionalDeps: Ace3, LibEasing
+
+embeds.xml
+
+Entry.lua
+
+Map.lua
+
+Animation.lua
+Text.lua
+
+DB.lua
+Menu.lua
+
+Events.lua
+
+Load.lua
