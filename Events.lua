@@ -1,6 +1,25 @@
 local _
 
 function ClassicNFCT:OnInitialize()
+    local L = LibStub('AceLocale-3.0'):GetLocale("ClassicNFCT")
+    L.UI = setmetatable(L.UI or {}, { __index = function(t, k) return k end, })
+    self.L = L
+
+    self.unitToGuid = {}
+    self.guidToUnit = {}
+
+    -- setup db
+    self:CreateDB()
+
+    self:CreateText()
+    self:CreateAnimation()
+
+    -- setup chat commands
+    self:RegisterChatCommand("cnfct", "OpenMenu")
+
+    -- setup menu
+    self:CreateMenu()
+
     -- if the addon is turned off in db, turn it off
     if not self.db.global.enabled then
         self:Disable()
@@ -34,6 +53,8 @@ function ClassicNFCT:OnDisable()
 end
 
 function ClassicNFCT:NAME_PLATE_UNIT_ADDED(event, unitID)
+    if not unitID then return end
+    
     local guid = UnitGUID(unitID)
 
     self.unitToGuid[unitID] = guid
@@ -42,7 +63,11 @@ function ClassicNFCT:NAME_PLATE_UNIT_ADDED(event, unitID)
 end
 
 function ClassicNFCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
+    if not unitID then return end
+    
     local guid = self.unitToGuid[unitID]
+    if not guid then return end
+    
     local anim = self.guidToAnim[guid]
 
     self.unitToGuid[unitID] = nil

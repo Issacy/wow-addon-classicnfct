@@ -9,10 +9,10 @@ Some code referred from [Nameplate Scrolling Combat Text](https://www.curseforge
 * Optional add (or only) icon
 * Change scale & alpha, additional options for pet/auto-attack/off-target
 * Change animation speed and crit animation duration  
-* Change max lines & count of showing (too many showing texts may slows your pc and spread all over your screen, balance options according to your own situation)
+* ~~Change max lines & count of showing (too many showing texts may slows your pc and spread all over your screen, balance options according to your own situation)~~
 
-### Change Log:
-[Change Log](CHANGELOG.md)
+### Change Logs:
+[Change Logs](CHANGELOGS.md)
 
 ### Remark:
 Because of addon limitations, I cannot know nameplate's screen position, miss many informations like out of screen, moving speed.

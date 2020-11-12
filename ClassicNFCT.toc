@@ -1,0 +1,51 @@
+## Interface: 90100
+## Version: @project-version@
+
+## Title: ClassicNFCT
+
+## Author: issacywang
+## X-Email: lote.mac at icloud dot com
+
+## X-Category: Combat
+## X-Website: https://www.curseforge.com/wow/addons/classicnfct/
+## X-License: GNU General Public License version 3 (GPLv3)
+## X-Curse-Project-ID: 411003
+
+## SavedVariables: ClassicNFCTDB
+
+## Notes: Classic nameplate-based floating combat text.
+## Notes-zhCN: 基于姓名版的仿经典浮动战斗数字
+## Notes-zhTW: 基於姓名版的仿經典浮動戰鬥數字
+
+## Libs ##
+libs\LibStub\LibStub.lua
+
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+Libs\AceAddon-3.0\AceAddon-3.0.xml
+Libs\AceConsole-3.0\AceConsole-3.0.xml
+Libs\AceDB-3.0\AceDB-3.0.xml
+Libs\AceLocale-3.0\AceLocale-3.0.xml
+Libs\AceGUI-3.0\AceGUI-3.0.xml
+Libs\AceConfig-3.0\AceConfig-3.0.xml
+Libs\AceEvent-3.0\AceEvent-3.0.xml
+Libs\LibSharedMedia-3.0\lib.xml
+Libs\AceGUI-3.0-SharedMediaWidgets\widget.xml
+
+Libs\LibEasing\LibEasing.lua
+
+## Localization ##
+Localization\Localization.xml
+
+
+## Entry -- needs to be the first ##
+Entry.lua
+
+## Utils ##
+Map.lua
+
+## Main ##
+Animation.lua
+Text.lua
+DB.lua
+Menu.lua
+Events.lua
