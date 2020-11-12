@@ -17,18 +17,18 @@ function ClassicNFCT:CreateMap()
                 i = i + 1
             end
             i = i + 1
-            return ret.key, ret.val
+            return ret[1], ret[2]
         end
     end
     function map:emplace(key, val)
         if key == nil then return end
         local idx = inner.index[key]
         if idx then
-            inner.container[idx].val = val
+            inner.container[idx][2] = val
             return
         end
         inner.len = inner.len + 1
-        inner.container[inner.len] = {key = key, val = val}
+        inner.container[inner.len] = {key, val}
         inner.index[key] = inner.len
         inner.cnt = inner.cnt + 1
     end
@@ -39,14 +39,23 @@ function ClassicNFCT:CreateMap()
         inner.container[idx] = nil
         inner.index[key] = nil
         inner.cnt = inner.cnt - 1
-        return ret.val
+        return ret[2]
     end
     function map:at(key)
         local idx = inner.index[key]
         if not idx then return end
-        return inner.container[idx].val
+        return inner.container[idx][2]
     end
-    function map:trunk()
+    function map:clear()
+        if inner.cnt > 0 then
+            inner.container = {}
+            inner.cnt = 0
+            inner.len = 0
+            inner.index = {}
+        end
+    end
+    function map:gc()
+        if inner.len == 0 then return end
         local container = {}
         local len = 0
         if inner.cnt > 0 then
@@ -55,7 +64,7 @@ function ClassicNFCT:CreateMap()
                 if ret then
                     len = len + 1
                     container[len] = ret
-                    inner.index[ret.key] = len
+                    inner.index[ret[1]] = len
                 end
             end
         end

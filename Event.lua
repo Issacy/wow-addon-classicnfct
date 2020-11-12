@@ -7,6 +7,8 @@ function ClassicNFCT:OnInitialize()
 
     self.unitToGuid = {}
     self.guidToUnit = {}
+    self.dynamicEvents = {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_TARGET_CHANGED"}
+    self.playerGUID = UnitGUID("player")
 
     -- setup db
     self:CreateDB()
@@ -20,51 +22,50 @@ function ClassicNFCT:OnInitialize()
     -- setup menu
     self:CreateMenu()
 
+    self.dynamicEvents = {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_TARGET_CHANGED"}
+
     -- if the addon is turned off in db, turn it off
     if not self.db.global.enabled then
         self:Disable()
     else
         self:Enable()
     end
+    
+    self:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+    self:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+
     SetCVar("floatingCombatTextCombatDamage", self.db.global.blzDisabled and  "0" or "1")
 end
 
 function ClassicNFCT:OnEnable()
-    self.playerGUID = UnitGUID("player")
-
-    self:RegisterEvent("NAME_PLATE_UNIT_ADDED")
-    self:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
-    self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    self:RegisterEvent("PLAYER_TARGET_CHANGED")
-
+    for _, event in pairs(self.dynamicEvents) do
+        self:RegisterEvent(event)
+    end
     self.db.global.enabled = true
 end
 
 function ClassicNFCT:OnDisable()
-    self:UnregisterAllEvents()
-
-    local unit = next(self.unitToGuid)
-    while unit do
-        self:NAME_PLATE_UNIT_REMOVED(nil, unit)
-        unit = next(self.unitToGuid)
+    for _, event in pairs(self.dynamicEvents) do
+        self:UnregisterEvent(event)
     end
-
+    for _, anim in self.guidToAnim:iter() do
+        anim:clear()
+    end
+    self.guidToAnim:clear()
     self.db.global.enabled = false
 end
 
 function ClassicNFCT:NAME_PLATE_UNIT_ADDED(event, unitID)
     if not unitID then return end
-    
     local guid = UnitGUID(unitID)
+    if not guid then return end
 
     self.unitToGuid[unitID] = guid
     self.guidToUnit[guid] = unitID
-    self.guidToAnim[guid] = self:CreateAnimationGroup()
 end
 
 function ClassicNFCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
     if not unitID then return end
-    
     local guid = self.unitToGuid[unitID]
     if not guid then return end
     
@@ -72,7 +73,6 @@ function ClassicNFCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
 
     self.unitToGuid[unitID] = nil
     self.guidToUnit[guid] = nil
-    self.guidToAnim[guid] = nil
 
     if anim then anim:clear() end
 end
@@ -86,66 +86,67 @@ function ClassicNFCT:COMBAT_LOG_EVENT_UNFILTERED()
 end
 
 function ClassicNFCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
+    local destUnit = self.guidToUnit[destGUID]
+    local nameplate = self:GetNamePlateForGUID(destGUID)
+    if not destUnit or not nameplate then return end
+
 	if self.playerGUID == sourceGUID then -- Player events
-		local destUnit = self.guidToUnit[destGUID]
-		if destUnit then
-			if (string.find(clue, "_DAMAGE")) then
-				local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand
-				if (string.find(clue, "SWING")) then
-					spellName, amount, overkill, _, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...
-				elseif (string.find(clue, "ENVIRONMENTAL")) then
-					spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...
-				else
-					spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...
-                end
-                if spellID == 75 then spellName = "melee" end
-				self:DamageEvent(destGUID, spellID, amount, school, critical, spellName)
-			elseif(string.find(clue, "_MISSED")) then
-				local spellID, spellName, spellSchool, missType, isOffHand, amountMissed
+        if (string.find(clue, "_DAMAGE")) then
+            local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand
+            if (string.find(clue, "SWING")) then
+                spellName, amount, overkill, _, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...
+            elseif (string.find(clue, "ENVIRONMENTAL")) then
+                spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...
+            else
+                spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...
+            end
+            if spellID == 75 then spellName = "melee" end
+            self:DamageEvent(destGUID, nameplate, spellID, amount, school, critical, spellName)
+        elseif(string.find(clue, "_MISSED")) then
+            local spellID, spellName, spellSchool, missType, isOffHand, amountMissed
 
-				if (string.find(clue, "SWING")) then
-                    spellName, missType, isOffHand, amountMissed = "melee", ...
-				else
-					spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...
-                end
-                if spellID == 75 then spellName = "melee" end
-				self:MissEvent(destGUID, spellID, spellSchool, missType, spellName)
-			end
-		end
-	elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)	and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0 then -- Pet/Guardian events
-		local destUnit = self.guidToUnit[destGUID]
-		if destUnit then
-			if (string.find(clue, "_DAMAGE")) then
-				local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand
-				if (string.find(clue, "SWING")) then
-					spellName, amount, overkill, _, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "pet", ...
-				elseif (string.find(clue, "ENVIRONMENTAL")) then
-					spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...
-				else
-					spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...
-				end
-				self:DamageEvent(destGUID, spellID, amount, "pet", critical, spellName)
-			-- elseif(string.find(clue, "_MISSED")) then -- Don't show pet MISS events for now.
-				-- local spellID, spellName, spellSchool, missType, isOffHand, amountMissed
+            if (string.find(clue, "SWING")) then
+                spellName, missType, isOffHand, amountMissed = "melee", ...
+            else
+                spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...
+            end
+            if spellID == 75 then spellName = "melee" end
+            self:MissEvent(destGUID, nameplate, spellID, spellSchool, missType, spellName)
+        end
+    elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0
+        or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)
+        and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0
+    then -- Pet/Guardian events
+        if (string.find(clue, "_DAMAGE")) then
+            local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand
+            if (string.find(clue, "SWING")) then
+                spellName, amount, overkill, _, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "pet", ...
+            elseif (string.find(clue, "ENVIRONMENTAL")) then
+                spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...
+            else
+                spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...
+            end
+            self:DamageEvent(destGUID, nameplate, spellID, amount, "pet", critical, spellName)
+        -- elseif(string.find(clue, "_MISSED")) then -- Don't show pet MISS events for now.
+            -- local spellID, spellName, spellSchool, missType, isOffHand, amountMissed
 
-				-- if (string.find(clue, "SWING")) then
-					-- if destGUID == self.playerGUID then
-					  -- missType, isOffHand, amountMissed = ...
-					-- else
-					  -- missType, isOffHand, amountMissed = "pet", ...
-					-- end
-				-- else
-					-- spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...
-				-- end
-				-- self:MissEvent(destGUID, spellID, missType)
-			end
-		end
+            -- if (string.find(clue, "SWING")) then
+                -- if destGUID == self.playerGUID then
+                    -- missType, isOffHand, amountMissed = ...
+                -- else
+                    -- missType, isOffHand, amountMissed = "pet", ...
+                -- end
+            -- else
+                -- spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...
+            -- end
+            -- self:MissEvent(destGUID, nameplate, spellID, missType)
+        end
     end
 end
 
 local truncateWords = {"", "K", "M", "B"}
 
-function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, spellName)
+function ClassicNFCT:DamageEvent(guid, nameplate, spellID, amount, school, crit, spellName)
     local text
     
     local icon = self.db.global.formatting.icon
@@ -226,10 +227,10 @@ function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, spellName)
         text = "|T"..GetSpellTexture(spellID)..":0|t"
     end
 
-    self:DisplayText(guid, text, crit, isPet, isMelee)
+    self:DisplayText(guid, nameplate, text, crit, isPet, isMelee)
 end
 
-function ClassicNFCT:MissEvent(guid, spellID, spellSchool, missType, spellName)
+function ClassicNFCT:MissEvent(guid, nameplate, spellID, spellSchool, missType, spellName)
     local text
     local icon = self.db.global.formatting.icon
 
@@ -254,5 +255,5 @@ function ClassicNFCT:MissEvent(guid, spellID, spellSchool, missType, spellName)
         end
     end
 
-    self:DisplayText(guid, text, false, isPet, isMelee)
+    self:DisplayText(guid, nameplate, text, false, isPet, isMelee)
 end

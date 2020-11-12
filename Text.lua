@@ -105,22 +105,28 @@ function ClassicNFCT:TextWithColor(text, school, isPet, isMelee)
     return "|Cff".. textColor .. text .. "|r"
 end
 
-function ClassicNFCT:DisplayText(guid, text, crit, pet, melee)
-    local fontString
-    local unit = self.guidToUnit[guid]
-    local anim = self.guidToAnim[guid]
-    local nameplate = unit and C_NamePlate.GetNamePlateForUnit(unit) or nil
+function ClassicNFCT:GetNamePlateForGUID(guid)
+    local unit, nameplate
+    repeat
+        if not guid then break end
+        unit = self.guidToUnit[guid]
+        if not unit or UnitIsDead(unit) then break end
+        nameplate = C_NamePlate.GetNamePlateForUnit(unit)
+        if not nameplate or not nameplate:IsShown() then
+            nameplate = nil
+        end
+    until true
+    return unit, nameplate
+end
 
-    if not (nameplate and unit and anim) then return end
+function ClassicNFCT:DisplayText(guid, nameplate, text, crit, pet, melee)
+    local anim = self.guidToAnim:at(guid)
+    if not anim then
+        anim = self:CreateAnimationGroup()
+        self.guidToAnim:emplace(guid, anim)
+    end
 
-    -- if self.animating:count() > self.db.global.animations.animationCount then
-    --     for fontString, _ in self.animating:iter() do
-    --         self:RecycleFontString(fontString)
-    --         break
-    --     end
-    -- end
-
-    fontString = self:GetFontString()
+    local fontString = self:GetFontString()
     local record = fontString.ClassicNFCT
 
     record.text = text
@@ -133,14 +139,9 @@ function ClassicNFCT:DisplayText(guid, text, crit, pet, melee)
     record.scale = pet and self.db.global.petFormatting.scale
         or (melee and self.db.global.autoAttackFormatting.scale)
         or 1
-
-    record.unit = unit
-    record.guid = guid
+    
     record.animatingStartTime = GetTime()
-    record.anchorFrame = nameplate
-
     anim:add(fontString, record)
-    self.animating:emplace(fontString, true)
 
     self:AnimateUpdate()
 end
