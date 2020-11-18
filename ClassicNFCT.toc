@@ -1,4 +1,4 @@
-## Interface: 90100
+## Interface: 90002
 ## Version: @project-version@
 
 ## Title: ClassicNFCT

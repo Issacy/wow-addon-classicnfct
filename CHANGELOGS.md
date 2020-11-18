@@ -1,3 +1,6 @@
+#### 2.05:
+* adapt game version of 9.0.2
+
 #### 2.04:
 * optimize
 
