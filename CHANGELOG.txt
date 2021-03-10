@@ -1,1 +1,1 @@
-* adapt game version of 9.0.2
+* adapt game version of 9.0.5
