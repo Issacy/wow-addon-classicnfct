@@ -1,3 +1,7 @@
+#### 2.08:
+* make crit text a bit bigger, bit quicker up-scale to 2 and slower down-scale to 1.5
+* normal text also up-scale from 0.8, move up in exp mode
+
 #### 2.07:
 * blizzard fct can be modified no matter this addon being enabled
 
