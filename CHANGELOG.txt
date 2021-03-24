@@ -1,1 +1,1 @@
-* adapt game version of 9.0.5
+* blizzard fct can be modified no matter this addon being enabled

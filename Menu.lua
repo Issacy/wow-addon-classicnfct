@@ -17,18 +17,6 @@ function ClassicNFCT:CreateMenu()
             order = 1,
             width = "half",
         },
-    }
-
-    menu.args.total = {
-        type = 'group',
-        name = '',
-        order = 2,
-        inline = true,
-        width = 'full',
-        disabled = function() return not self.db.global.enabled end,
-    }
-
-    menu.args.total.args = {
         disableBlizzardFCT = {
             type = 'toggle',
             name = L.UI["Disable Blizzard FCT"],
@@ -38,10 +26,21 @@ function ClassicNFCT:CreateMenu()
                 self.db.global.blzDisabled = newValue
                 SetCVar("floatingCombatTextCombatDamage", self.db.global.blzDisabled and  "0" or "1")
             end,
-            order = 10,
-            width = "full",
+            order = 2,
+            width = "half",
         },
+    }
 
+    menu.args.total = {
+        type = 'group',
+        name = '',
+        order = 3,
+        inline = true,
+        width = 'full',
+        disabled = function() return not self.db.global.enabled end,
+    }
+
+    menu.args.total.args = {
         animations = {
             type = 'group',
             name = L.UI["Animations"],

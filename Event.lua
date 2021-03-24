@@ -7,7 +7,6 @@ function ClassicNFCT:OnInitialize()
 
     self.unitToGuid = {}
     self.guidToUnit = {}
-    self.dynamicEvents = {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_TARGET_CHANGED"}
     self.playerGUID = UnitGUID("player")
 
     -- setup db

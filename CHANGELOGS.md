@@ -1,3 +1,6 @@
+#### 2.07:
+* blizzard fct can be modified no matter this addon being enabled
+
 #### 2.06:
 * adapt game version of 9.0.5
 

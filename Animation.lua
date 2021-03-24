@@ -335,14 +335,17 @@ function ClassicNFCT:AnimateUpdate()
     
     if needGC then self.guidToAnim:gc() end
     
+    local animUpdateFunc = self.frame:GetScript("OnUpdate")
     if self.guidToAnim:count() == 0 then
-        -- nothing in the animation list, so just kill the onupdate
-        self.frame:SetScript("OnUpdate", nil)
+        if animUpdateFunc then
+            -- nothing in the animation list, so just kill the onupdate
+            self.frame:SetScript("OnUpdate", nil)
+        end
         return
     end
 
     -- start onupdate if it's not already running
-    if (self.frame:GetScript("OnUpdate") == nil) then
+    if not animUpdateFunc then
         self.frame:SetScript("OnUpdate", self.animUpdateFunc)
     end
 end
