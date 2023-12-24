@@ -1,6 +1,3 @@
-* adapt game version of 10.2.0
-* re-design animation
-* add an on-screen display, show if you deal damage when you do not select any target or target's nameplate out of screen
-    * can change on-screen position, scale and alpha
-* if deal damage to one that it's nameplate is out of screen, and your target's nameplate is on-screen, then damage text will be shown on the target's place
-* help wanted: russian translation
+* change text self-anchor to bottom
+* add vertical padding of line
+* change draw layer back to background

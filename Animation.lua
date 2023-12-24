@@ -1,6 +1,7 @@
 local LibEasing = LibStub("LibEasing-1.0")
 
 local ANIMATION_HORIZONTAL_PADDING = 10
+local ANIMATION_VERTICAL_PADDING = 10
 local ANIMATION_VERTICAL_OFFSET_PERCENT = -0.4
 local ANIMATION_ALPHA_OUT_PERCENT = 0.5
 local ANIMATION_CRIT_SCALE = 1.5
@@ -8,7 +9,7 @@ local ANIMATION_CRIT_SCALE_PERCENT = 0.1
 local ANIMATION_CRIT_MAX_SCALE = 3
 local ANIMATION_CRIT_MIN_SCALE = 2.5
 local ANIMATION_CRIT_SCALE_UP_PERCENT = 0.2
-local LAYER = "ARTWORK"
+local LAYER = "BACKGROUND"
 local LAYER_SUBLEVEL_PET = -8
 local LAYER_SUBLEVEL_PET_CRIT = -7
 local LAYER_SUBLEVEL_MELEE = -6
@@ -262,7 +263,7 @@ function ClassicNFCT:CreateAnimationGroup()
         self:_updateLR(self._middle, now, targetGUID, onScreen)
         
         self:_layout(self._middle, 0, nameplate, onScreen)
-        local lineHeight = this.db.global.layout.lineHeight
+        local lineHeight = this.db.global.layout.lineHeight + ANIMATION_VERTICAL_PADDING
         for i = #self._up, 1, -1 do
             self:_layout(self._up[i], lineHeight * (#self._up - i + 1), nameplate, onScreen)
         end
@@ -364,10 +365,14 @@ function ClassicNFCT:DoAnimate(record, elapsed, targetGUID, onScreen)
         startAlpha = self.db.global.style.onScreen.scale
     end
     
+    local critScale = 1
     record.critScale = 1
-    if record.crit then record.critScale = self:DoCritScale(elapsed, duration) end
+    if record.crit then
+        critScale = self:DoCritScale(elapsed, duration)
+        record.critScale = ANIMATION_CRIT_SCALE
+    end
     
-    record.finalScale, record.targetScale, record.offsetY = record.scale * record.critScale, targetScale
+    record.finalScale, record.targetScale, record.offsetY = record.scale * critScale, targetScale
     
     record.offsetY = 0
     if not record.crit then
@@ -402,7 +407,7 @@ function ClassicNFCT:DoLayout(fontString, record, nameplate, onScreen)
         offsetY = offsetY + self.db.global.layout.onScreenPos.centerOffsetY
     end
 
-    fontString:SetPoint("CENTER", nameplate, "CENTER", offsetX / record.finalScale, offsetY / record.finalScale)
+    fontString:SetPoint("BOTTOM", nameplate, "CENTER", offsetX / record.finalScale, offsetY / record.finalScale)
 end
 
 function ClassicNFCT:AnimateUpdate()

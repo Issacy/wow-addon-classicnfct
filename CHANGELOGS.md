@@ -1,3 +1,9 @@
+#### 2.10:
+
+* change text self-anchor to bottom
+* add vertical padding of line
+* change draw layer back to background
+
 #### 2.09:
 
 * adapt game version of 10.2.0
