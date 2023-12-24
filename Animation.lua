@@ -358,11 +358,11 @@ function ClassicNFCT:DoAnimate(record, elapsed, targetGUID, onScreen)
     end
 
     -- scale
-    local targetScale = self.db.global.style.scale
+    record.targetScale = self.db.global.style.scale
     if targetStyle == 1 then
-        startAlpha = self.db.global.style.offTarget.scale
+        record.targetScale = self.db.global.style.offTarget.scale
     elseif targetStyle == 2 then
-        startAlpha = self.db.global.style.onScreen.scale
+        record.targetScale = self.db.global.style.onScreen.scale
     end
     
     local critScale = 1
@@ -372,7 +372,7 @@ function ClassicNFCT:DoAnimate(record, elapsed, targetGUID, onScreen)
         record.critScale = ANIMATION_CRIT_SCALE
     end
     
-    record.finalScale, record.targetScale, record.offsetY = record.scale * critScale, targetScale
+    record.finalScale = record.scale * critScale
     
     record.offsetY = 0
     if not record.crit then

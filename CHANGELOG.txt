@@ -1,3 +1,1 @@
-* change text self-anchor to bottom
-* add vertical padding of line
-* change draw layer back to background
+* fix off-target and on-screen alpha & scale

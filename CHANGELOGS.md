@@ -1,3 +1,7 @@
+#### 2.11:
+
+* fix off-target and on-screen alpha & scale
+
 #### 2.10:
 
 * change text self-anchor to bottom
