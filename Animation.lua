@@ -1,17 +1,49 @@
 local LibEasing = LibStub("LibEasing-1.0")
 
 local ANIMATION_HORIZONTAL_PADDING = 10
-local ANIMATION_VERTICAL_DISTANCE = 10
+local ANIMATION_VERTICAL_OFFSET_PERCENT = -0.4
+local ANIMATION_ALPHA_OUT_PERCENT = 0.5
 local ANIMATION_CRIT_SCALE = 1.5
-local ANIMATION_CRIT_MAX_SCALE = 2
-local ANIMATION_CRIT_MIN_SCALE = 0.5
-local ANIMATION_NORM_MIN_SCALE = 0.8
-local ANIMATION_ALPHA_START = 0.667
-local LINE_HEIGHT = 45
+local ANIMATION_CRIT_SCALE_PERCENT = 0.1
+local ANIMATION_CRIT_MAX_SCALE = 3
+local ANIMATION_CRIT_MIN_SCALE = 2.5
+local ANIMATION_CRIT_SCALE_UP_PERCENT = 0.2
+local LAYER = "ARTWORK"
+local LAYER_SUBLEVEL_PET = -8
+local LAYER_SUBLEVEL_PET_CRIT = -7
+local LAYER_SUBLEVEL_MELEE = -6
+local LAYER_SUBLEVEL_MELEE_CRIT = -5
+local LAYER_SUBLEVEL = -4
+local LAYER_SUBLEVEL_CRIT = -3
+
+local screenHeight
+
+local function FontStringSorter(fontStringA, fontStringB)
+    return fontStringA.ClassicNFCT.startTime < fontStringB.ClassicNFCT.startTime
+end
 
 function ClassicNFCT:CreateAnimation()
     self.guidToAnim = self:CreateMap()
+    self.wilds = {}
+    self.refs = self:CreateMap()
+    self.wildAnim = self:CreateAnimationGroup()
+    self.wildFrame = CreateFrame("Frame", nil, UIParent)
+    self.wildFrame:SetPoint("CENTER")
     self.animUpdateFunc = function() self:AnimateUpdate() end
+end
+
+function ClassicNFCT:WildFontString(fontString)
+    table.insert(self.wilds, fontString)
+end
+
+function ClassicNFCT:RefFontString(fontString)
+    local guid = fontString.ClassicNFCT.guid
+    local fontStrings = self.refs:at(guid)
+    if not fontStrings then
+        fontStrings = {}
+        self.refs:emplace(guid, fontStrings)
+    end
+    table.insert(fontStrings, fontString)
 end
 
 
@@ -21,9 +53,21 @@ function ClassicNFCT:CreateAnimationGroup()
         _version = 1,
         _middle = {left = {}, right = {}},
         _up = {}, _down = {},
+        _countMap = this:CreateMap(), _count = 0,
     }
 
-    function anim:add(fontString, record)
+    function anim:count(guid)
+        if not guid then return self._count end
+        return self._countMap:at(guid) or 0
+    end
+
+    function anim:iterCountMap() return self._countMap:iter() end
+
+    function anim:add(fontString)
+        local record = fontString.ClassicNFCT
+        
+        self._countMap:emplace(record.guid, self:count(record.guid) + 1)
+        self._count = self._count + 1
         record.width = fontString:GetUnboundedStringWidth() * record.scale
         
         local move = self._middle.center
@@ -102,13 +146,13 @@ function ClassicNFCT:CreateAnimationGroup()
         for i = un, 1, -1 do
             line = self._up[i]
             tx, ty = #line.left + 1, un - i + 1
-            local ty2 = ty ^ 2
-            tr = tx ^ 2 + ty2
+            local tySqr = ty ^ 2
+            tr = tx ^ 2 + tySqr
             if tr < r then
                 x, y, r = tx, ty, tr
             end
             tx = -(#line.right + 1)
-            tr = tx ^ 2 + ty2
+            tr = tx ^ 2 + tySqr
             if tr < r then
                 x, y, r = tx, ty, tr
             end
@@ -117,13 +161,13 @@ function ClassicNFCT:CreateAnimationGroup()
         for i = dn, 1, -1 do
             line = self._down[i]
             tx, ty = #line.left + 1, -(dn - i + 1)
-            local ty2 = ty ^ 2
-            tr = tx ^ 2 + ty2
+            local tySqr = ty ^ 2
+            tr = tx ^ 2 + tySqr
             if tr < r then
                 x, y, r = tx, ty, tr
             end
             tx = -(#line.right + 1)
-            tr = tx ^ 2 + ty2
+            tr = tx ^ 2 + tySqr
             if tr < r then
                 x, y, r = tx, ty, tr
             end
@@ -132,35 +176,32 @@ function ClassicNFCT:CreateAnimationGroup()
         return x, y
     end
 
-    function anim:_updateOneLR(lr, isTarget, now, duration, critDuration, normalDuration, alphaStartTime)
+    function anim:_updateOneLR(lr, now, targetGUID, onScreen)
         for i = #lr, 1, -1 do
             local fontString = lr[i]
             local record = fontString.ClassicNFCT
-            local elapsed = now - record.animatingStartTime
-            if elapsed <= duration then
-                this:DoAnimate(fontString, record, isTarget, elapsed, duration, critDuration, normalDuration, alphaStartTime)
-            else
+            local elapsed = now - record.startTime
+            if not this:DoAnimate(record, elapsed, targetGUID, onScreen) then
                 table.remove(lr, i)
-                this:RecycleFontString(fontString)
+                self:_removeOne(fontString, this.RecycleFontString)
             end
         end
     end
 
-    function anim:_updateOne(line, isTarget, now, duration, critDuration, normalDuration, alphaStartTime)
-        self:_updateOneLR(line.left, isTarget, now, duration, critDuration, normalDuration, alphaStartTime)
-        self:_updateOneLR(line.right, isTarget, now, duration, critDuration, normalDuration, alphaStartTime)
+    function anim:_updateOne(line, now, targetGUID, onScreen)
+        self:_updateOneLR(line.left, now, targetGUID, onScreen)
+        self:_updateOneLR(line.right, now, targetGUID, onScreen)
 
         local fontString = line.center
         if not fontString then return end
         
         local record = fontString.ClassicNFCT
-        local elapsed = now - record.animatingStartTime
-        if elapsed <= duration then
-            this:DoAnimate(fontString, record, isTarget, elapsed, duration, critDuration, normalDuration, alphaStartTime)
+        local elapsed = now - record.startTime
+        if this:DoAnimate(record, elapsed, targetGUID, onScreen) then
             return
         end
 
-        this:RecycleFontString(fontString)
+        self:_removeOne(fontString, this.RecycleFontString)
         local ln, rn = #line.left, #line.right
         if ln == 0 and rn == 0 then
             line.center = nil
@@ -169,32 +210,32 @@ function ClassicNFCT:CreateAnimationGroup()
         end
     end
 
-    function anim:_updateLR(line, isTarget, now, duration, critDuration, normalDuration, alphaStartTime)
-        self:_updateOne(line, isTarget, now, duration, critDuration, normalDuration, alphaStartTime)
+    function anim:_updateLR(line, now, targetGUID, onScreen)
+        self:_updateOne(line, now, targetGUID, onScreen)
         if line.center then return end
         local un, dn = #self._up, #self._down
         if un == 0 and dn == 0 then return end
         self._middle = table.remove(un > dn and self._up or self._down)
     end
 
-    function anim:_updateUD(lines, isTarget, now, duration, critDuration, normalDuration, alphaStartTime)
+    function anim:_updateUD(lines, now, targetGUID, onScreen)
         for i = #lines, 1, -1 do
             local line = lines[i]
-            self:_updateOne(line, isTarget, now, duration, critDuration, normalDuration, alphaStartTime)
+            self:_updateOne(line, now, targetGUID, onScreen)
             if not line.center then
                 table.remove(lines, i)
             end
         end
     end
 
-    function anim:_layout(line, y, nameplate)
+    function anim:_layout(line, y, nameplate, onScreen)
         local x, half = 0, 0
         local fontString, record = line.center
         if not fontString then return end
         
         record = fontString.ClassicNFCT
         record.x, record.y = x, y
-        this:DoLayout(fontString, record, nameplate)
+        this:DoLayout(fontString, record, nameplate, onScreen)
         half = record.width * record.critScale * 0.5 + ANIMATION_HORIZONTAL_PADDING
         local xl, xr = half, -half
         for _, fontString in ipairs(line.left) do
@@ -202,7 +243,7 @@ function ClassicNFCT:CreateAnimationGroup()
             half = record.width * record.critScale * 0.5 + ANIMATION_HORIZONTAL_PADDING
             xl = xl + half
             record.x, record.y = xl, y
-            this:DoLayout(fontString, record, nameplate)
+            this:DoLayout(fontString, record, nameplate, onScreen)
             xl = xl + half
         end
         for _, fontString in ipairs(line.right) do
@@ -210,43 +251,53 @@ function ClassicNFCT:CreateAnimationGroup()
             half = record.width * record.critScale * 0.5 + ANIMATION_HORIZONTAL_PADDING
             xr = xr - half
             record.x, record.y = xr, y
-            this:DoLayout(fontString, record, nameplate)
+            this:DoLayout(fontString, record, nameplate, onScreen)
             xr = xr - half
         end
     end
 
-    function anim:update(nameplate, isTarget, now, duration, critDuration, normalDuration, alphaStartTime)
-        self:_updateUD(self._up, isTarget, now, duration, critDuration, normalDuration, alphaStartTime)
-        self:_updateUD(self._down, isTarget, now, duration, critDuration, normalDuration, alphaStartTime)
-        self:_updateLR(self._middle, isTarget, now, duration, critDuration, normalDuration, alphaStartTime)
-        self:_layout(self._middle, 0, nameplate)
+    function anim:update(nameplate, now, targetGUID, onScreen)
+        self:_updateUD(self._up, now, targetGUID, onScreen)
+        self:_updateUD(self._down, now, targetGUID, onScreen)
+        self:_updateLR(self._middle, now, targetGUID, onScreen)
+        
+        self:_layout(self._middle, 0, nameplate, onScreen)
+        local lineHeight = this.db.global.layout.lineHeight
         for i = #self._up, 1, -1 do
-            self:_layout(self._up[i], LINE_HEIGHT * (#self._up - i + 1), nameplate)
+            self:_layout(self._up[i], lineHeight * (#self._up - i + 1), nameplate, onScreen)
         end
         for i = #self._down, 1, -1 do
-            self:_layout(self._down[i], LINE_HEIGHT * -(#self._down - i + 1), nameplate)
+            self:_layout(self._down[i], lineHeight * -(#self._down - i + 1), nameplate, onScreen)
         end
     end
 
-    function anim:_clear(line)
+    function anim:_removeOne(fontString, func)
+        local record = fontString.ClassicNFCT
+        self._countMap:emplace(record.guid, self:count(record.guid) - 1)
+        self._count = self._count - 1
+        func(this, fontString)
+    end
+
+    function anim:_clear(line, func)
+        local fontString
         if line.center then
-            this:RecycleFontString(line.center)
+            self:_removeOne(line.center, func)
         end
         for _, fontString in ipairs(line.left) do
-            this:RecycleFontString(fontString)
+            self:_removeOne(fontString, func)
         end
         for _, fontString in ipairs(line.right) do
-            this:RecycleFontString(fontString)
+            self:_removeOne(fontString, func)
         end
     end
 
-    function anim:clear()
-        self:_clear(self._middle)
+    function anim:clear(func)
+        self:_clear(self._middle, func)
         for _, line in ipairs(self._up) do
-            self:_clear(line)
+            self:_clear(line, func)
         end
         for _, line in ipairs(self._down) do
-            self:_clear(line)
+            self:_clear(line, func)
         end
         self._middle, self._up, self._down =
             {left = {}, right = {}}, {}, {}
@@ -255,99 +306,187 @@ function ClassicNFCT:CreateAnimationGroup()
     return anim
 end
 
-function ClassicNFCT:CritScale(elapsed, duration, start, middle, finish)
+function ClassicNFCT:DoAlpha(elapsed, duration, startAlpha)
+    local alpha = startAlpha
+    local sep = duration * ANIMATION_ALPHA_OUT_PERCENT
+    if elapsed >= sep then
+        alpha = LibEasing.Linear(elapsed - sep, startAlpha, -startAlpha, duration - sep)
+    end
+    return math.max(0, math.min(1, alpha))
+end
+
+function ClassicNFCT:DoCritScale(elapsed, duration)
+    duration = duration * ANIMATION_CRIT_SCALE_PERCENT
+    local start, middle, finish = ANIMATION_CRIT_MIN_SCALE, ANIMATION_CRIT_MAX_SCALE, ANIMATION_CRIT_SCALE
     if elapsed < duration then
-        local sep = duration * 0.6
+        local sep = duration * ANIMATION_CRIT_SCALE_UP_PERCENT
         if elapsed < sep then
-            return LibEasing.OutQuad(elapsed, start, middle - start, sep)
+            return LibEasing.OutCubic(elapsed, start, middle - start, sep)
         else
-            return LibEasing.InQuad(elapsed - sep, middle, finish - middle, duration - sep)
+            return LibEasing.InCubic(elapsed - sep, middle, finish - middle, duration - sep)
         end
     end
     return finish
 end
 
-function ClassicNFCT:DoAnimate(
-    fontString, record,
-    isTarget, elapsed,
-    duration, critDuration, normalDuration,
-    alphaStartTime)
-    -- alpha
-    local startAlpha = self.db.global.formatting.alpha
-    if (self.db.global.useOffTarget and not isTarget) then
-        startAlpha = self.db.global.offTargetFormatting.alpha
+function ClassicNFCT:DoAnimate(record, elapsed, targetGUID, onScreen)
+    local duration = self.db.global.animations.animationDuration
+    if elapsed > duration then return false end
+
+    local targetStyle = 0
+    if not onScreen then
+        if (targetGUID ~= record.guid and self.db.global.style.useOffTarget) then
+            targetStyle = 1
+        end
+    elseif (self.db.global.style.useOnScreen) then
+        targetStyle = 2
     end
 
-    local alpha = startAlpha
-    if elapsed > alphaStartTime then
-        alpha = LibEasing.InExpo(elapsed - alphaStartTime, startAlpha, -startAlpha, duration - alphaStartTime)
+    -- alpha
+    local startAlpha = self.db.global.style.alpha
+    if targetStyle == 1 then
+        startAlpha = self.db.global.style.offTarget.alpha
+    elseif targetStyle == 2 then
+        startAlpha = self.db.global.style.onScreen.alpha
     end
-    fontString:SetAlpha(alpha)
+
+    if record.crit then
+        record.alpha = startAlpha
+    else
+        record.alpha = self:DoAlpha(elapsed, duration, startAlpha)
+    end
 
     -- scale
-    local targetScale = isTarget
-        and self.db.global.formatting.scale
-        or self.db.global.offTargetFormatting.scale
-    record.critScale = 1
-    if record.crit then
-        if elapsed <= critDuration then
-            record.critScale = self:CritScale(
-                elapsed, critDuration,
-                ANIMATION_CRIT_MIN_SCALE, ANIMATION_CRIT_MAX_SCALE, ANIMATION_CRIT_SCALE
-            )
-        else
-            record.critScale = ANIMATION_CRIT_SCALE
-        end
-    else
-        if elapsed <= normalDuration then
-            record.critScale = LibEasing.OutQuad(
-                elapsed,
-                ANIMATION_NORM_MIN_SCALE, record.critScale - ANIMATION_NORM_MIN_SCALE,
-                normalDuration
-            )
-        end
+    local targetScale = self.db.global.style.scale
+    if targetStyle == 1 then
+        startAlpha = self.db.global.style.offTarget.scale
+    elseif targetStyle == 2 then
+        startAlpha = self.db.global.style.onScreen.scale
     end
-    record.finalScale, record.targetScale, record.offsetY =
-        record.scale * record.critScale,
-        targetScale,
-        LibEasing.OutExpo(elapsed, 0, ANIMATION_VERTICAL_DISTANCE, duration)
+    
+    record.critScale = 1
+    if record.crit then record.critScale = self:DoCritScale(elapsed, duration) end
+    
+    record.finalScale, record.targetScale, record.offsetY = record.scale * record.critScale, targetScale
+    
+    record.offsetY = 0
+    if not record.crit then
+        local moveUp = self.db.global.layout.lineHeight
+        record.offsetY = LibEasing.Linear(elapsed, moveUp * ANIMATION_VERTICAL_OFFSET_PERCENT, moveUp, duration)
+    end
+    
+    return true
 end
 
-function ClassicNFCT:DoLayout(fontString, record, nameplate)
+function ClassicNFCT:DoLayout(fontString, record, nameplate, onScreen)
     fontString:ClearAllPoints()
     fontString:SetParent(nameplate)
+    local layerSubLevel
+    if record.crit then
+        layerSubLevel = LAYER_SUBLEVEL
+        if record.melee then layerSubLevel = LAYER_SUBLEVEL_MELEE end
+        if record.pet then layerSubLevel = LAYER_SUBLEVEL_PET end
+    else
+        layerSubLevel = LAYER_SUBLEVEL_CRIT
+        if record.melee then layerSubLevel = LAYER_SUBLEVEL_MELEE_CRIT end
+        if record.pet then layerSubLevel = LAYER_SUBLEVEL_PET_CRIT end
+    end
+    fontString:SetDrawLayer(LAYER, layerSubLevel)
+    fontString:SetAlpha(record.alpha)
     fontString:SetScale(record.finalScale * record.targetScale)
+    
+    local offsetX, offsetY = record.x, (self.db.global.layout.distance / record.targetScale + record.y + record.offsetY)
 
-    fontString:SetPoint(
-        "CENTER", nameplate, "CENTER",
-        record.x / record.finalScale,
-        (self.db.global.distance / record.targetScale + record.y + record.offsetY) / record.finalScale
-    )
+    if onScreen then
+        offsetX = offsetX + self.db.global.layout.onScreenPos.centerOffsetX
+        offsetY = offsetY + self.db.global.layout.onScreenPos.centerOffsetY
+    end
+
+    fontString:SetPoint("CENTER", nameplate, "CENTER", offsetX / record.finalScale, offsetY / record.finalScale)
 end
 
 function ClassicNFCT:AnimateUpdate()
-    SetCVar("floatingCombatTextCombatDamage", self.db.global.blzDisabled and  "0" or "1")
+    local currentScreenHeight = GetScreenHeight()
+    if screenHeight ~= currentScreenHeight then
+        screenHeight = currentScreenHeight
+        self.wildFrame:SetSize(GetScreenWidth(), currentScreenHeight)
+    end
 
-    local needGC = false
+    local now, targetGUID, attackableTargetGUID = GetTime(), UnitGUID("target"), self:GetAttackableNamePlateTargetGUID()
+    local attackableTargetAnim = attackableTargetGUID and self.guidToAnim:at(attackableTargetGUID)
+    
     for guid, anim in self.guidToAnim:iter() do
         local _, nameplate = self:GetNamePlateForGUID(guid)
         if not nameplate then
-            needGC = true
-            anim:clear()
-            self.guidToAnim:remove(guid)
+            anim:clear(self.RefFontString)
+            self.guidToAnim:remove(guid, true)
         else
-            local now, duration = GetTime(), 1 / self.db.global.animations.animationspeed
-            local critDuration = duration * self.db.global.animations.critpercent
-            local normalDuration = critDuration * 0.6
-            local alphaStartTime = duration * ANIMATION_ALPHA_START
-            anim:update(nameplate, guid == UnitGUID("target"), now, duration, critDuration, normalDuration, alphaStartTime)
+            if self.wildAnim:count(guid) > 0 then
+                self.wildAnim:clear(self.RefFontString)
+            end
         end
     end
+    self.guidToAnim:gc()
+
+    for guid, anim in self.guidToAnim:iter() do
+        if anim:count() ~= anim:count(guid) then
+            local needReRef = false
+            for animGUID, count in anim:iterCountMap() do
+                if count > 0 and animGUID ~= guid and self.guidToAnim:at(animGUID) then
+                    needReRef = true
+                    break
+                end
+            end
+            if needReRef then anim:clear(self.RefFontString) end
+        end
+    end
+
+    for guid, fontStrings in self.refs:iter() do
+        local anim = self.guidToAnim:at(guid)
+        if anim then
+            anim:clear(self.RefFontString)
+        end
+    end
+
+    for guid, fontStrings in self.refs:iter() do
+        local anim
+        if guid ~= attackableTargetGUID then
+            anim = self.guidToAnim:at(guid)
+        end
+        if anim then
+            table.sort(fontStrings, FontStringSorter)
+            for _, fontString in ipairs(fontStrings) do anim:add(fontString) end
+        else
+            for _, fontString in ipairs(fontStrings) do self:WildFontString(fontString) end
+        end
+    end
+    self.refs:clear()
+
+    if #(self.wilds) > 0 then
+        table.sort(self.wilds, FontStringSorter)
+        local anim = attackableTargetAnim or self.wildAnim
+        for _, fontString in ipairs(self.wilds) do anim:add(fontString) end
+        self.wilds = {}
+    end
     
-    if needGC then self.guidToAnim:gc() end
+    for guid, anim in self.guidToAnim:iter() do
+        local _, nameplate = self:GetNamePlateForGUID(guid)
+        anim:update(nameplate, now, targetGUID, false)
+    end
+    self.wildAnim:update(self.wildFrame, now, nil, true)
     
+    local stopUpdate = self.guidToAnim:count() == 0
+    if not stopUpdate then
+        stopUpdate = true
+        for _, anim in self.guidToAnim:iter() do
+            stopUpdate = stopUpdate and anim:count() == 0
+            if not stopUpdate then break end
+        end
+    end
+    if stopUpdate then stopUpdate = self.wildAnim:count() == 0 end
+
     local animUpdateFunc = self.frame:GetScript("OnUpdate")
-    if self.guidToAnim:count() == 0 then
+    if stopUpdate then
         if animUpdateFunc then
             -- nothing in the animation list, so just kill the onupdate
             self.frame:SetScript("OnUpdate", nil)

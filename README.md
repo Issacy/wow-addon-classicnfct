@@ -4,23 +4,24 @@ Some code referred from [Nameplate Scrolling Combat Text](https://www.curseforge
 
 ### Options:
 
-* Change font, font-style, font-size, font-shadow, optional font-color by damage type
-* Change number format style, vertical distance of nameplate
-* Optional add (or only) icon
-* Change scale & alpha, additional options for pet/auto-attack/off-target
-* Change animation speed and crit animation duration  
-* ~~Change max lines & count of showing (too many showing texts may slows your pc and spread all over your screen, balance options according to your own situation)~~
+* Disable Blizzard floating combat text
+* Change animation duration
+* Change font, font-style, font-size, font-shadow
+* Change layout:
+  * vertical distance of nameplate
+  * line height
+  * on-screen text position
+* Change style:
+  * Number format style, add (or only) icon
+  * Colored by damage type
+  * Scale & alpha, additional options for pet/auto-attack/off-target/on-screen
 
 ### Change Logs:
+
 [Change Logs](CHANGELOGS.md)
 
 ### Remark:
+
 Because of addon limitations, I cannot know nameplate's screen position, miss many informations like out of screen, moving speed.
 
 Welcome for posting or emailing me (lote.mac@icloud.com) any solution for this.
-
-If not limitations, I can make it more similar to classic:
-
-1. show damage texts on screen edge when target is out of screen
-1. when target is dead or gone, damage texts will stay a bit on screen before disappear
-1. when target is moving, damage texts also moves but with smaller acceleration

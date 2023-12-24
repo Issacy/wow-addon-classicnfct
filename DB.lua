@@ -1,42 +1,56 @@
-local defaultFont = "Friz Quadrata TT"
-if (LibStub("LibSharedMedia-3.0"):IsValid("font", "Bazooka")) then
-    defaultFont = "Bazooka"
-end
+local SharedMedia = LibStub("LibSharedMedia-3.0")
+
+local defaultFont = SharedMedia:GetDefault("font")
 
 local defaults = {
     global = {
         enabled = true,
         blzDisabled = true,
 
-        font = defaultFont,
-        fontFlag = "",
-        textShadow = true,
-        damageColor = false,
-
-        fmtStyle = "commaSep",
-
+        
+        font = {
+            choice = defaultFont,
+            flag = "",
+            size = 30,
+            shadow = true,
+        },
+        
         animations = {
-            animationspeed = 1,
-            critpercent = .2,
+            animationDuration = 1.5,
+            -- critpercent = 0.15,
             -- animMaxLines = 5,
             -- animationCount = 80,
         },
-
-        distance = 25,
-
-        formatting = {
-            icon = "none",
+        
+        layout = {
+            distance = 25,
+            lineHeight = 45,
+            onScreenPos = {
+                centerOffsetX = 0,
+                centerOffsetY = 200,
+            }
+        },
+        
+        style = {
+            numStyle = "commaSep",
+            iconStyle = "none",
+            dmgTypeColor = false,
             scale = 1,
             alpha = 1,
-        },
-
-        petFormatting = { scale = 0.7, },
-        autoAttackFormatting = { scale = 0.7, },
-
-        useOffTarget = true,
-        offTargetFormatting = {
-            scale = 0.5,
-            alpha = 0.33,
+            pet = { scale = 0.7, },
+            autoAttack = { scale = 0.7, },
+            
+            useOffTarget = true,
+            offTarget = {
+                scale = 0.75,
+                alpha = 0.5,
+            },
+    
+            useOnScreen = false,
+            onScreen = {
+                scale = 1,
+                alpha = 1,
+            },
         },
     },
 }

@@ -1,2 +1,6 @@
-* make crit text a bit bigger, bit quicker up-scale to 2 and slower down-scale to 1.5
-* normal text also up-scale from 0.8, move up in exp mode
+* adapt game version of 10.2.0
+* re-design animation
+* add an on-screen display, show if you deal damage when you do not select any target or target's nameplate out of screen
+    * can change on-screen position, scale and alpha
+* if deal damage to one that it's nameplate is out of screen, and your target's nameplate is on-screen, then damage text will be shown on the target's place
+* help wanted: russian translation

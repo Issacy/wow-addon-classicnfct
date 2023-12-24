@@ -4,13 +4,13 @@
 
 local L = LibStub('AceLocale-3.0'):NewLocale("ClassicNFCT", 'enUS', true, 'raw')
 
-L.fmtStyles = {
+L.numStyles = {
     ["truncate"] = "Truncate",
     ["commaSep"] = "Comma Seperate",
     ["disable"] = "Disable",
 }
 
-L.iconValues = {
+L.iconStyles = {
     ["none"] = "No Icons",
     ["left"] = "Left Side",
     ["right"] = "Right Side",
@@ -18,7 +18,7 @@ L.iconValues = {
     ["only"] = "Icons Only (No Text)",
 };
 
-L.fontFlags = {
+L.fontStyles = {
     [""] = "None",
     ["OUTLINE"] = "Outline",
     ["THICKOUTLINE"] = "Thick Outline",

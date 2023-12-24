@@ -1,6 +1,7 @@
 local SharedMedia = LibStub("LibSharedMedia-3.0")
 
-local FONT_SIZE = 30
+local fontName, fontFlag, fontSize
+local fontPath
 
 function ClassicNFCT:CreateText()
     self.cache = {}
@@ -17,28 +18,36 @@ function ClassicNFCT:GetFontPath(fontName)
     return fontPath
 end
 
-function ClassicNFCT:GetFontString()
+function ClassicNFCT:GetFontString(guid)
     local fontString, record
+    local newFontName, newFontFlag, newFontSize = self.db.global.font.choice, self.db.global.font.flag, self.db.global.font.size
+    if (newFontName ~= fontName or newFontFlag ~= fontFlag or newFontSize ~= fontSize) then
+        fontName, fontFlag, fontSize = newFontName, newFontFlag, newFontSize
+        fontPath = self:GetFontPath(fontName)
+        for _, fontString in ipairs(self.cache) do
+            fontString:SetFont(fontPath, fontSize, fontFlag)
+        end
+    end
 
     if (next(self.cache)) then
         fontString = table.remove(self.cache)
     else
         fontString = self.frame:CreateFontString()
-        fontString:SetFont(self:GetFontPath(self.db.global.font), FONT_SIZE, self.db.global.fontFlag)
+        fontString:SetFont(fontPath, fontSize, fontFlag)
         fontString:SetParent(self.frame)
         -- fontString:SetIgnoreParentScale(false)
         fontString:SetIgnoreParentAlpha(true)
-        fontString:SetDrawLayer("BACKGROUND")
         fontString.ClassicNFCT = {}
     end
 
     record = fontString.ClassicNFCT
+    record.guid = guid
     record.fontSize = FONT_SIZE
-    record.fontFlag = self.db.global.fontFlag
+    record.fontFlag = self.db.global.font.flag
     fontString:SetText("")
     fontString:SetAlpha(1)
     fontString:SetScale(1)
-    if self.db.global.textShadow then
+    if self.db.global.font.shadow then
         fontString:SetShadowOffset(1, -1)
     else
         fontString:SetShadowOffset(0, 0)
@@ -58,6 +67,14 @@ function ClassicNFCT:RecycleFontString(fontString)
 
     table.insert(self.cache, fontString)
 end
+
+local SCHOOL_MASK_PHYSICAL = 2 ^ 0
+local SCHOOL_MASK_HOLY = 2 ^ 1
+local SCHOOL_MASK_FIRE = 2 ^ 2
+local SCHOOL_MASK_NATURE = 2 ^ 3
+local SCHOOL_MASK_FROST = 2 ^ 4
+local SCHOOL_MASK_SHADOW = 2 ^ 5
+local SCHOOL_MASK_ARCANE = 2 ^ 6
 
 local DAMAGE_TYPE_COLORS = {
     [SCHOOL_MASK_PHYSICAL] = "FFFF00",
@@ -83,7 +100,7 @@ function ClassicNFCT:TextWithColor(text, school, isPet, isMelee)
     elseif isPet then
         textColor = DAMAGE_TYPE_COLORS_SIMPLE["pet"]
     else
-        if not self.db.global.damageColor then
+        if not self.db.global.style.dmgTypeColor then
             textColor = DAMAGE_TYPE_COLORS_SIMPLE["spell"]
         else
             local c, r, g, b = 0, 0, 0, 0
@@ -105,28 +122,14 @@ function ClassicNFCT:TextWithColor(text, school, isPet, isMelee)
     return "|Cff".. textColor .. text .. "|r"
 end
 
-function ClassicNFCT:GetNamePlateForGUID(guid)
-    local unit, nameplate
-    repeat
-        if not guid then break end
-        unit = self.guidToUnit[guid]
-        if not unit or UnitIsDead(unit) then break end
-        nameplate = C_NamePlate.GetNamePlateForUnit(unit)
-        if not nameplate or not nameplate:IsShown() then
-            nameplate = nil
-        end
-    until true
-    return unit, nameplate
-end
-
-function ClassicNFCT:DisplayText(guid, nameplate, text, crit, pet, melee)
+function ClassicNFCT:DisplayText(guid, text, crit, pet, melee)
     local anim = self.guidToAnim:at(guid)
     if not anim then
         anim = self:CreateAnimationGroup()
         self.guidToAnim:emplace(guid, anim)
     end
 
-    local fontString = self:GetFontString()
+    local fontString = self:GetFontString(guid)
     local record = fontString.ClassicNFCT
 
     record.text = text
@@ -136,12 +139,13 @@ function ClassicNFCT:DisplayText(guid, nameplate, text, crit, pet, melee)
     record.pet = pet
     record.melee = melee
 
-    record.scale = pet and self.db.global.petFormatting.scale
-        or (melee and self.db.global.autoAttackFormatting.scale)
+    record.scale = pet and self.db.global.style.pet.scale
+        or (melee and self.db.global.style.autoAttack.scale)
         or 1
     
-    record.animatingStartTime = GetTime()
-    anim:add(fontString, record)
+    record.startTime = GetTime()
+    -- self:RefFontString(fontString)
+    anim:add(fontString)
 
     self:AnimateUpdate()
 end

@@ -5,8 +5,8 @@ function ClassicNFCT:OnInitialize()
     L.UI = setmetatable(L.UI or {}, { __index = function(t, k) return k end, })
     self.L = L
 
-    self.unitToGuid = {}
-    self.guidToUnit = {}
+    self.unitToGuid = self:CreateMap()
+    self.guidToUnit = self:CreateMap()
     self.playerGUID = UnitGUID("player")
 
     -- setup db
@@ -33,7 +33,7 @@ function ClassicNFCT:OnInitialize()
     self:RegisterEvent("NAME_PLATE_UNIT_ADDED")
     self:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
 
-    SetCVar("floatingCombatTextCombatDamage", self.db.global.blzDisabled and  "0" or "1")
+    self:ChangeBlizzardFCT()
 end
 
 function ClassicNFCT:OnEnable()
@@ -51,6 +51,7 @@ function ClassicNFCT:OnDisable()
         anim:clear()
     end
     self.guidToAnim:clear()
+    self.wildAnim:clear()
     self.db.global.enabled = false
 end
 
@@ -59,21 +60,19 @@ function ClassicNFCT:NAME_PLATE_UNIT_ADDED(event, unitID)
     local guid = UnitGUID(unitID)
     if not guid then return end
 
-    self.unitToGuid[unitID] = guid
-    self.guidToUnit[guid] = unitID
+    self.unitToGuid:emplace(unitID, guid)
+    self.guidToUnit:emplace(guid, unitID)
 end
 
 function ClassicNFCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
     if not unitID then return end
-    local guid = self.unitToGuid[unitID]
+    local guid = self.unitToGuid:at(unitID)
     if not guid then return end
     
-    local anim = self.guidToAnim[guid]
+    local anim = self.guidToAnim:at(guid)
 
-    self.unitToGuid[unitID] = nil
-    self.guidToUnit[guid] = nil
-
-    if anim then anim:clear() end
+    self.unitToGuid:remove(unitID)
+    self.guidToUnit:remove(guid)
 end
 
 function ClassicNFCT:PLAYER_TARGET_CHANGED(event, unitID)
@@ -85,10 +84,6 @@ function ClassicNFCT:COMBAT_LOG_EVENT_UNFILTERED()
 end
 
 function ClassicNFCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
-    local destUnit = self.guidToUnit[destGUID]
-    local nameplate = self:GetNamePlateForGUID(destGUID)
-    if not destUnit or not nameplate then return end
-
 	if self.playerGUID == sourceGUID then -- Player events
         if (string.find(clue, "_DAMAGE")) then
             local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand
@@ -100,8 +95,8 @@ function ClassicNFCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, des
                 spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...
             end
             if spellID == 75 then spellName = "melee" end
-            self:DamageEvent(destGUID, nameplate, spellID, amount, school, critical, spellName)
-        elseif(string.find(clue, "_MISSED")) then
+            self:DamageEvent(destGUID, spellID, amount, school, critical, spellName)
+        elseif (string.find(clue, "_MISSED")) then
             local spellID, spellName, spellSchool, missType, isOffHand, amountMissed
 
             if (string.find(clue, "SWING")) then
@@ -110,7 +105,7 @@ function ClassicNFCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, des
                 spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...
             end
             if spellID == 75 then spellName = "melee" end
-            self:MissEvent(destGUID, nameplate, spellID, spellSchool, missType, spellName)
+            self:MissEvent(destGUID, spellID, spellSchool, missType, spellName)
         end
     elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0
         or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)
@@ -125,35 +120,37 @@ function ClassicNFCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, des
             else
                 spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...
             end
-            self:DamageEvent(destGUID, nameplate, spellID, amount, "pet", critical, spellName)
-        -- elseif(string.find(clue, "_MISSED")) then -- Don't show pet MISS events for now.
-            -- local spellID, spellName, spellSchool, missType, isOffHand, amountMissed
+            self:DamageEvent(destGUID, spellID, amount, "pet", critical, spellName)
+        --[[ -- Don't show pet MISS events for now.
+        elseif (string.find(clue, "_MISSED")) then
+            local spellID, spellName, spellSchool, missType, isOffHand, amountMissed
 
-            -- if (string.find(clue, "SWING")) then
-                -- if destGUID == self.playerGUID then
-                    -- missType, isOffHand, amountMissed = ...
-                -- else
-                    -- missType, isOffHand, amountMissed = "pet", ...
-                -- end
-            -- else
-                -- spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...
-            -- end
-            -- self:MissEvent(destGUID, nameplate, spellID, missType)
+            if (string.find(clue, "SWING")) then
+                if destGUID == self.playerGUID then
+                    missType, isOffHand, amountMissed = ...
+                else
+                    missType, isOffHand, amountMissed = "pet", ...
+                end
+            else
+                spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...
+            end
+            self:MissEvent(destGUID, spellID, missType)
+        ]]
         end
     end
 end
 
 local truncateWords = {"", "K", "M", "B"}
 
-function ClassicNFCT:DamageEvent(guid, nameplate, spellID, amount, school, crit, spellName)
+function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, spellName)
     local text
     
-    local icon = self.db.global.formatting.icon
+    local icon = self.db.global.style.iconStyle
     local isMelee = spellName == "melee"
     local isPet = school == "pet"
 
     if (icon ~= "only") then
-        local fmtStyle = self.db.global.fmtStyle
+        local fmtStyle = self.db.global.style.numStyle
         if fmtStyle == "disable" then
             text = tostring(amount)
         else
@@ -226,12 +223,12 @@ function ClassicNFCT:DamageEvent(guid, nameplate, spellID, amount, school, crit,
         text = "|T"..GetSpellTexture(spellID)..":0|t"
     end
 
-    self:DisplayText(guid, nameplate, text, crit, isPet, isMelee)
+    self:DisplayText(guid, text, crit, isPet, isMelee)
 end
 
-function ClassicNFCT:MissEvent(guid, nameplate, spellID, spellSchool, missType, spellName)
+function ClassicNFCT:MissEvent(guid, spellID, spellSchool, missType, spellName)
     local text
-    local icon = self.db.global.formatting.icon
+    local icon = self.db.global.style.iconStyle
 
     if (icon == "only") then
         return
@@ -254,5 +251,35 @@ function ClassicNFCT:MissEvent(guid, nameplate, spellID, spellSchool, missType, 
         end
     end
 
-    self:DisplayText(guid, nameplate, text, false, isPet, isMelee)
+    self:DisplayText(guid, text, false, isPet, isMelee)
+end
+
+function ClassicNFCT:GetNamePlateForGUID(guid)
+    local unit, nameplate
+    repeat
+        if not guid then break end
+        unit = self.guidToUnit:at(guid)
+        if not unit or UnitIsDead(unit) then break end
+        nameplate = C_NamePlate.GetNamePlateForUnit(unit)
+        if not nameplate or not nameplate:IsShown() then
+            nameplate = nil
+        end
+    until true
+    return unit, nameplate
+end
+
+function ClassicNFCT:GetAttackableNamePlateTargetGUID()
+    local targetGUID = UnitGUID("target")
+    for unit, guid in self.unitToGuid:iter() do
+        if guid == targetGUID then
+            if UnitIsDead(unit) or not UnitCanAttack("player", "target") then return end
+            local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
+            if not nameplate or not nameplate:IsShown() then return end
+            return guid
+        end
+    end
+end
+
+function ClassicNFCT:ChangeBlizzardFCT(enabled)
+    SetCVar("floatingCombatTextCombatDamage", self.db.global.blzDisabled and "0" or "1")
 end
