@@ -1,3 +1,7 @@
+#### 2.11.1:
+
+* fix on-screen alpha setting error
+
 #### 2.11:
 
 * fix off-target and on-screen alpha & scale

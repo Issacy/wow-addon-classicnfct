@@ -1,1 +1,1 @@
-* fix off-target and on-screen alpha & scale
+* fix on-screen alpha setting error
