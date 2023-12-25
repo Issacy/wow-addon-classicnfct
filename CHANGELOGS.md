@@ -1,3 +1,9 @@
+#### 2.12.0:
+
+* optimize extend shape of fill order used by text animation
+* add spell blacklist
+* pet text color will also be affected if toggle 'Use Damage Type Color', a new pet melee color is being used
+
 #### 2.11.1:
 
 * fix on-screen alpha setting error

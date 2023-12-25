@@ -35,6 +35,7 @@ local defaults = {
             numStyle = "commaSep",
             iconStyle = "none",
             dmgTypeColor = false,
+            spellBlacklist = {},
             scale = 1,
             alpha = 1,
             pet = { scale = 0.7, },
@@ -57,4 +58,23 @@ local defaults = {
 
 function ClassicNFCT:CreateDB()
     self.db = LibStub("AceDB-3.0"):New("ClassicNFCTDB", defaults, true)
+    self.spellBlacklist = {}
+    for _, v in ipairs(self.db.global.style.spellBlacklist) do
+        self.spellBlacklist[v] = true
+    end
+    self:GenerateSpellBlacklistForMenu()
 end
+
+function ClassicNFCT:GenerateSpellBlacklistForMenu()
+    self.spellBlacklistForMenu = table.concat(self.db.global.style.spellBlacklist, '|')
+end
+
+function ClassicNFCT:UpdateSpellBlacklistForDB(newValueString)
+    local t = {}
+    for spellID in self:SplitString(newValue, '|+') do
+        table.insert(t, spellID:lower(spellID))
+    end
+    self.db.global.style.spellBlacklist = t
+    self:GenerateSpellBlacklistForMenu()
+end
+

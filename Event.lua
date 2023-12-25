@@ -84,70 +84,75 @@ function ClassicNFCT:COMBAT_LOG_EVENT_UNFILTERED()
 end
 
 function ClassicNFCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
+    local isMelee
 	if self.playerGUID == sourceGUID then -- Player events
         if (string.find(clue, "_DAMAGE")) then
-            local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand
-            if (string.find(clue, "SWING")) then
-                spellName, amount, overkill, _, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...
-            elseif (string.find(clue, "ENVIRONMENTAL")) then
-                spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...
-            else
-                spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...
-            end
-            if spellID == 75 then spellName = "melee" end
-            self:DamageEvent(destGUID, spellID, amount, school, critical, spellName)
+            return self:CombatFilter_Damage(clue, destGUID, false, ...)
         elseif (string.find(clue, "_MISSED")) then
-            local spellID, spellName, spellSchool, missType, isOffHand, amountMissed
-
-            if (string.find(clue, "SWING")) then
-                spellName, missType, isOffHand, amountMissed = "melee", ...
-            else
-                spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...
-            end
-            if spellID == 75 then spellName = "melee" end
-            self:MissEvent(destGUID, spellID, spellSchool, missType, spellName)
+            return self:CombatFilter_Miss(clue, destGUID, false, ...)
         end
-    elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0
-        or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)
+    elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)
         and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0
     then -- Pet/Guardian events
         if (string.find(clue, "_DAMAGE")) then
-            local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand
-            if (string.find(clue, "SWING")) then
-                spellName, amount, overkill, _, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "pet", ...
-            elseif (string.find(clue, "ENVIRONMENTAL")) then
-                spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...
-            else
-                spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...
-            end
-            self:DamageEvent(destGUID, spellID, amount, "pet", critical, spellName)
-        --[[ -- Don't show pet MISS events for now.
+            return self:CombatFilter_Damage(clue, destGUID, true, ...)
         elseif (string.find(clue, "_MISSED")) then
-            local spellID, spellName, spellSchool, missType, isOffHand, amountMissed
-
-            if (string.find(clue, "SWING")) then
-                if destGUID == self.playerGUID then
-                    missType, isOffHand, amountMissed = ...
-                else
-                    missType, isOffHand, amountMissed = "pet", ...
-                end
-            else
-                spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...
-            end
-            self:MissEvent(destGUID, spellID, missType)
-        ]]
+            -- Don't show pet MISS events for now.
+            return self:CombatFilter_Miss(clue, destGUID, true, ...)
         end
     end
 end
 
+function ClassicNFCT:CombatFilter_Damage(clue, destGUID, isPet, ...)
+    local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand
+    local isMelee
+    if (string.find(clue, "SWING")) then
+        amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...
+        isMelee = true
+    elseif (string.find(clue, "ENVIRONMENTAL")) then
+        -- spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...
+        return
+    else
+        spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...
+    end
+    if spellID == 75 then isMelee = true end
+    if isPet then
+        if (isMelee and self.spellBlacklist.melee) or (not isMelee and self.spellBlacklist.spell) then return end
+    else
+        if (self.spellBlacklist.pet) or (isMelee and self.spellBlacklist.pet_melee) or (not isMelee and self.spellBlacklist.pet_spell) then return end
+    end
+    if self.spellBlacklist[tostring(spellID)] or self.spellBlacklist[tostring(spellName)] then return end
+    self:DamageEvent(destGUID, spellID, amount, school, critical, isPet, isMelee)
+end
+
+function ClassicNFCT:CombatFilter_Miss(clue, destGUID, isPet, ...)
+    local spellID, spellName, spellSchool, missType, isOffHand, amountMissed
+    local isMelee
+    if (string.find(clue, "SWING")) then
+        missType, isOffHand, amountMissed = ...
+        isMelee = true
+    elseif (string.find(clue, "ENVIRONMENTAL")) then
+        -- spellName, missType, isOffHand, amountMissed = ...
+        return
+    else
+        spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...
+    end
+    if spellID == 75 then isMelee = true end
+    if isPet then
+        if (isMelee and self.spellBlacklist.melee) or (not isMelee and self.spellBlacklist.spell) then return end
+    else
+        if (self.spellBlacklist.pet) or (isMelee and self.spellBlacklist.pet_melee) or (not isMelee and self.spellBlacklist.pet_spell) then return end
+    end
+    if self.spellBlacklist[tostring(spellID)] or self.spellBlacklist[tostring(spellName)] then return end
+    self:MissEvent(destGUID, spellID, spellSchool, missType, isPet, isMelee)
+end
+
 local truncateWords = {"", "K", "M", "B"}
 
-function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, spellName)
+function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, isPet, isMelee)
     local text
     
     local icon = self.db.global.style.iconStyle
-    local isMelee = spellName == "melee"
-    local isPet = school == "pet"
 
     if (icon ~= "only") then
         local fmtStyle = self.db.global.style.numStyle
@@ -226,7 +231,7 @@ function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, spellName)
     self:DisplayText(guid, text, crit, isPet, isMelee)
 end
 
-function ClassicNFCT:MissEvent(guid, spellID, spellSchool, missType, spellName)
+function ClassicNFCT:MissEvent(guid, spellID, spellSchool, missType, isPet, isMelee)
     local text
     local icon = self.db.global.style.iconStyle
 
@@ -234,9 +239,7 @@ function ClassicNFCT:MissEvent(guid, spellID, spellSchool, missType, spellName)
         return
     end
 
-    local isMelee = spellName == "melee"
-    local isPet = spellSchool == "pet"
-    text = self:TextWithColor(self.L.MISS_EVENT_STRINGS[missType], spellSchool, isPet, isMelee)
+   text = self:TextWithColor(self.L.MISS_EVENT_STRINGS[missType], spellSchool, isPet, isMelee)
 
     -- add icons
     if (icon ~= "none" and spellID) then

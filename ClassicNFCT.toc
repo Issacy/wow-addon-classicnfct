@@ -42,6 +42,7 @@ Entry.lua
 
 ## Utils ##
 Map.lua
+String.lua
 
 ## Main ##
 Animation.lua

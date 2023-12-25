@@ -1,1 +1,3 @@
-* fix on-screen alpha setting error
+* optimize text group shape
+* add spell blacklist
+* pet text color will also be affected if toggle 'Use Damage Type Color', a new pet melee color is being used

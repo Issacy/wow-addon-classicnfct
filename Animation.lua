@@ -2,7 +2,7 @@ local LibEasing = LibStub("LibEasing-1.0")
 
 local ANIMATION_HORIZONTAL_PADDING = 10
 local ANIMATION_VERTICAL_PADDING = 10
-local ANIMATION_VERTICAL_OFFSET_PERCENT = -0.4
+local ANIMATION_VERTICAL_OFFSET_PERCENT = -0.5
 local ANIMATION_ALPHA_OUT_PERCENT = 0.5
 local ANIMATION_CRIT_SCALE = 1.5
 local ANIMATION_CRIT_SCALE_PERCENT = 0.1
@@ -116,59 +116,74 @@ function ClassicNFCT:CreateAnimationGroup()
 
     function anim:_pos()
         local un, dn = #self._up, #self._down
+        local line = self._middle
+
+        local tx, ty, tr--[[ , tySqr ]]
 
         -- up most
-        local x, y = 0, un + 1
+        x, y = 0, un + 1
         local r = y ^ 2
-        
-        -- down most
-        local tx, ty = 0, -(dn + 1)
-        local tr = ty ^ 2
+        -- local r = y
+
+        -- left most
+        tx, ty = #line.left + 1, 0
+        tr = tx ^ 2
+        -- tr = tx
         if tr < r then
             x, y, r = tx, ty, tr
         end
-
-        -- left most
-        local line = self._middle
-        tx, ty = #line.left + 1, 0
-        tr = tx ^ 2
+        
+        -- down most
+        tx, ty = 0, -(dn + 1)
+        tr = ty ^ 2
+        -- tr = -ty
         if tr < r then
             x, y, r = tx, ty, tr
         end
 
         -- right most
-        tx = -(#line.right + 1)
+        tx, ty = -(#line.right + 1), 0
         tr = tx ^ 2
+        -- tr = -tx
         if tr < r then
             x, y, r = tx, ty, tr
         end
         
-        -- up side bottom -> top left & right most
-        for i = un, 1, -1 do
+        -- prev: up side bottom -> top left & right most
+        -- now: top left & right most -> up side bottom
+        -- for i = un, 1, -1 do
+        for i = 1, un do
             line = self._up[i]
             tx, ty = #line.left + 1, un - i + 1
-            local tySqr = ty ^ 2
+            tySqr = ty ^ 2
             tr = tx ^ 2 + tySqr
+            -- tr = tx + ty
             if tr < r then
                 x, y, r = tx, ty, tr
             end
             tx = -(#line.right + 1)
             tr = tx ^ 2 + tySqr
+            -- tr = -tx + ty
             if tr < r then
                 x, y, r = tx, ty, tr
             end
         end
-        -- down side top -> bottom left & right most
-        for i = dn, 1, -1 do
+        
+        -- prev: down side top -> bottom left & right most
+        -- now: bottom left & right most -> down side top 
+        -- for i = dn, 1, -1 do
+        for i = 1, dn do
             line = self._down[i]
             tx, ty = #line.left + 1, -(dn - i + 1)
-            local tySqr = ty ^ 2
+            tySqr = ty ^ 2
             tr = tx ^ 2 + tySqr
+            -- tr = tx - ty
             if tr < r then
                 x, y, r = tx, ty, tr
             end
             tx = -(#line.right + 1)
             tr = tx ^ 2 + tySqr
+            -- tr = -tx - ty
             if tr < r then
                 x, y, r = tx, ty, tr
             end
