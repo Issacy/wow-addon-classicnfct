@@ -14,6 +14,7 @@ Some code referred from [Nameplate Scrolling Combat Text](https://www.curseforge
 * Change style:
   * Number format style, add (or only) icon
   * Colored by damage type
+  * Spell blacklist
   * Scale & alpha, additional options for pet/auto-attack/off-target/on-screen
 
 ### Change Logs:
