@@ -70,11 +70,14 @@ function ClassicNFCT:GenerateSpellBlacklistForMenu()
 end
 
 function ClassicNFCT:UpdateSpellBlacklistForDB(newValueString)
-    local t = {}
-    for spellID in self:SplitString(newValue, '|+') do
-        table.insert(t, spellID:lower(spellID))
+    local db, t = {}, {}
+    for v in self:SplitString(newValueString, '|+') do
+        v = v:lower()
+        table.insert(db, v)
+        t[v] = true
     end
-    self.db.global.style.spellBlacklist = t
+    self.db.global.style.spellBlacklist = db
+    self.spellBlacklist = t
     self:GenerateSpellBlacklistForMenu()
 end
 

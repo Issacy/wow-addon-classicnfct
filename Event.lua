@@ -116,7 +116,7 @@ function ClassicNFCT:CombatFilter_Damage(clue, destGUID, isPet, ...)
         spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...
     end
     if spellID == 75 then isMelee = true end
-    if isPet then
+    if not isPet then
         if (isMelee and self.spellBlacklist.melee) or (not isMelee and self.spellBlacklist.spell) then return end
     else
         if (self.spellBlacklist.pet) or (isMelee and self.spellBlacklist.pet_melee) or (not isMelee and self.spellBlacklist.pet_spell) then return end
@@ -138,7 +138,7 @@ function ClassicNFCT:CombatFilter_Miss(clue, destGUID, isPet, ...)
         spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...
     end
     if spellID == 75 then isMelee = true end
-    if isPet then
+    if not isPet then
         if (isMelee and self.spellBlacklist.melee) or (not isMelee and self.spellBlacklist.spell) then return end
     else
         if (self.spellBlacklist.pet) or (isMelee and self.spellBlacklist.pet_melee) or (not isMelee and self.spellBlacklist.pet_spell) then return end

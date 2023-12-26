@@ -1,3 +1,7 @@
+#### 2.12.1:
+
+* fix spell blacklist
+
 #### 2.12.0:
 
 * optimize extend shape of fill order used by text animation
