@@ -304,15 +304,15 @@ function ClassicNFCT:CreateMenu()
                 type = 'toggle',
                 name = L.UI["Use Seperate On-Screen Text Style"],
                 desc = "",
-                get = function() return self.db.global.useOnScreen end,
-                set = function(_, newValue) self.db.global.useOnScreen = newValue end,
+                get = function() return self.db.global.style.useOnScreen end,
+                set = function(_, newValue) self.db.global.style.useOnScreen = newValue end,
                 order = 10,
                 width = "full",
             },
             onScreen = {
                 type = 'group',
                 name = L.UI["On-Screen Text Style"],
-                hidden = function() return not self.db.global.useOnScreen end,
+                hidden = function() return not self.db.global.style.useOnScreen end,
                 order = 11,
                 inline = true,
                 args = {

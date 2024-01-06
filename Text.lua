@@ -146,6 +146,7 @@ function ClassicNFCT:DisplayText(guid, text, crit, pet, melee)
         or 1
     
     record.startTime = GetTime()
+    record.sortIndex = self:NewGlobalIndex()
     -- self:RefFontString(fontString)
     anim:add(fontString)
 

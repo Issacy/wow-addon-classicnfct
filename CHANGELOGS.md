@@ -1,3 +1,8 @@
+#### 2.12.3:
+
+* make text order more stable
+* fix seperated on-screen style
+
 #### 2.12.2:
 
 * optimize performance

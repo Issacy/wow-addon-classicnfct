@@ -20,7 +20,7 @@ local LAYER_SUBLEVEL_CRIT = -3
 local screenHeight
 
 local function FontStringSorter(fontStringA, fontStringB)
-    return fontStringA.ClassicNFCT.startTime < fontStringB.ClassicNFCT.startTime
+    return fontStringA.ClassicNFCT.sortIndex:compare(fontStringB.ClassicNFCT.sortIndex) < 0 
 end
 
 function ClassicNFCT:CreateAnimation()

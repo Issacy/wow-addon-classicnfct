@@ -1,2 +1,2 @@
-* optimize performance
-* change max length of truncate number format
+* make text order more stable
+* fix seperated on-screen style
