@@ -1,1 +1,2 @@
-* fix spell blacklist
+* optimize performance
+* change max length of truncate number format

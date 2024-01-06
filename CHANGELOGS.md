@@ -1,3 +1,8 @@
+#### 2.12.2:
+
+* optimize performance
+* change max length of truncate number format
+
 #### 2.12.1:
 
 * fix spell blacklist

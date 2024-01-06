@@ -69,7 +69,7 @@ function ClassicNFCT:CreateAnimationGroup()
         
         self._countMap:emplace(record.guid, self:count(record.guid) + 1)
         self._count = self._count + 1
-        record.width = fontString:GetUnboundedStringWidth() * record.scale
+        record.width = record.textWidth * record.scale
         
         local move = self._middle.center
         self._middle.center = fontString
@@ -451,8 +451,8 @@ function ClassicNFCT:AnimateUpdate()
     for guid, anim in self.guidToAnim:iter() do
         if anim:count() ~= anim:count(guid) then
             local needReRef = false
-            for animGUID, count in anim:iterCountMap() do
-                if count > 0 and animGUID ~= guid and self.guidToAnim:at(animGUID) then
+            for guid2, count in anim:iterCountMap() do
+                if count > 0 and guid2 ~= guid and self.guidToAnim:at(guid2) then
                     needReRef = true
                     break
                 end
@@ -483,8 +483,12 @@ function ClassicNFCT:AnimateUpdate()
     self.refs:clear()
 
     if #(self.wilds) > 0 then
+        local anim = self.wildAnim
+        if attackableTargetAnim then
+            attackableTargetAnim:clear(self.WildFontString)
+            anim = attackableTargetAnim
+        end
         table.sort(self.wilds, FontStringSorter)
-        local anim = attackableTargetAnim or self.wildAnim
         for _, fontString in ipairs(self.wilds) do anim:add(fontString) end
         self.wilds = {}
     end

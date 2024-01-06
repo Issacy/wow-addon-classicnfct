@@ -1,5 +1,7 @@
 local SharedMedia = LibStub("LibSharedMedia-3.0")
 
+local truncateWords = {"", "K", "M", "B"}
+
 local fontName, fontFlag, fontSize
 local fontPath
 
@@ -87,36 +89,35 @@ local DAMAGE_TYPE_COLORS = {
 }
 
 local DAMAGE_TYPE_COLORS_SIMPLE = {
-	["melee"] = "FFFFFF",
-    ["pet"] = "CC8400",
     ["spell"] = "FFFF00",
+	["melee"] = "FFFFFF",
+    ["pet_spell"] = "CC8400",
+    ["pet_melee"] = "CCCCCC",
 }
 
 function ClassicNFCT:TextWithColor(text, school, isPet, isMelee)
     -- color text
     local textColor
-    if isMelee then
-        textColor = DAMAGE_TYPE_COLORS_SIMPLE["melee"]
-    elseif isPet then
-        textColor = DAMAGE_TYPE_COLORS_SIMPLE["pet"]
+    if not self.db.global.style.dmgTypeColor or not school then
+        if not isPet then
+            textColor = isMelee and DAMAGE_TYPE_COLORS_SIMPLE["melee"] or DAMAGE_TYPE_COLORS_SIMPLE["spell"]
+        else
+            textColor = isMelee and DAMAGE_TYPE_COLORS_SIMPLE["pet_melee"] or DAMAGE_TYPE_COLORS_SIMPLE["pet_spell"]
+        end
     else
-        if not self.db.global.style.dmgTypeColor then
+        local c, r, g, b = 0, 0, 0, 0
+        for k, v in pairs(DAMAGE_TYPE_COLORS) do
+            if bit.band(k, school) ~= 0 then
+                c = c + 1
+                r = r + tonumber(string.sub(v, 1, 2), 16)
+                g = g + tonumber(string.sub(v, 3, 4), 16)
+                b = b + tonumber(string.sub(v, 5, 6), 16)
+            end
+        end
+        if c == 0 then
             textColor = DAMAGE_TYPE_COLORS_SIMPLE["spell"]
         else
-            local c, r, g, b = 0, 0, 0, 0
-            for k, v in pairs(DAMAGE_TYPE_COLORS) do
-                if bit.band(k, school) ~= 0 then
-                    c = c + 1
-                    r = r + tonumber(string.sub(v, 1, 2), 16)
-                    g = g + tonumber(string.sub(v, 3, 4), 16)
-                    b = b + tonumber(string.sub(v, 5, 6), 16)
-                end
-            end
-            if c == 0 then
-                textColor = DAMAGE_TYPE_COLORS_SIMPLE["spell"]
-            else
-                textColor = string.format("%02x%02x%02x", r / c, g / c, b / c)
-            end
+            textColor = string.format("%02x%02x%02x", r / c, g / c, b / c)
         end
     end
     return "|Cff".. textColor .. text .. "|r"
@@ -134,6 +135,7 @@ function ClassicNFCT:DisplayText(guid, text, crit, pet, melee)
 
     record.text = text
     fontString:SetText(text)
+    record.textWidth = fontString:GetUnboundedStringWidth()
 
     record.crit = crit
     record.pet = pet
@@ -148,4 +150,52 @@ function ClassicNFCT:DisplayText(guid, text, crit, pet, melee)
     anim:add(fontString)
 
     self:AnimateUpdate()
+end
+
+function ClassicNFCT:FormatNumber(amount)
+    local fmtStyle = self.db.global.style.numStyle
+    
+    if fmtStyle == "disable" then return tostring(amount) end
+    
+    local abs = math.abs(amount)
+    local sym = amount >= 0 and "" or "-"
+    
+    if fmtStyle == "truncate" then
+        local idx = 1
+        local truncLen = #truncateWords
+        while abs >= 1000 do
+            idx = idx + 1
+            if idx < truncLen and abs >= 1000 then
+                abs = abs / 1000
+            else
+                break
+            end
+        end
+        local word = truncateWords[idx]
+        local text
+        if idx == 1 then
+            text = tostring(abs)
+        else
+            text = string.format("%.2f", abs)
+            local textLen = string.len(text)
+            if textLen >= 6 then
+                text = string.sub(text, 1, -4)
+            elseif textLen == 5 then
+                text = string.sub(text, 1, -2)
+            end
+        end
+        return sym .. text .. word
+    end
+    
+    -- if fmtStyle == "commaSep" then
+        local remain = abs % 1000
+        local concat = {sym, abs >= 1000 and string.format("%03d", remain) or remain}
+        while abs >= 1000 do
+            abs = (abs - remain) / 1000
+            remain = abs % 1000
+            table.insert(concat, 2, ",")
+            table.insert(concat, 2, abs >= 1000 and string.format("%03d", remain) or remain)
+        end
+        return table.concat(concat)
+    -- end
 end

@@ -147,65 +147,14 @@ function ClassicNFCT:CombatFilter_Miss(clue, destGUID, isPet, ...)
     self:MissEvent(destGUID, spellID, spellSchool, missType, isPet, isMelee)
 end
 
-local truncateWords = {"", "K", "M", "B"}
-
 function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, isPet, isMelee)
     local text
     
     local icon = self.db.global.style.iconStyle
 
     if (icon ~= "only") then
-        local fmtStyle = self.db.global.style.numStyle
-        if fmtStyle == "disable" then
-            text = tostring(amount)
-        else
-            local abs = math.abs(amount)
-            local sym = amount >= 0 and "" or "-"
-            if fmtStyle == "truncate" then
-                local idx = 1
-                local truncLen = #truncateWords
-                while amount >= 1000 do
-                    idx = idx + 1
-                    if idx < truncLen and amount >= 1000 then
-                        amount = amount / 1000
-                    else
-                        break
-                    end
-                end
-                local word = truncateWords[idx]
-                if idx == 1 then
-                    text = tostring(amount)
-                else
-                    text = string.format("%.2f", amount)
-                    local textLen = string.len(text)
-                    if textLen >= 6 then
-                        text = string.sub(text, 1, -4)
-                    elseif textLen == 5 then
-                        text = string.sub(text, 1, -2)
-                    end
-                    if string.find(text, "%.00$") then
-                        text = string.sub(text, 1, -4)
-                    elseif string.find(text, "%.%d0$") then
-                        text = string.sub(text, 1, -2)
-                    end
-                end
-                text = text .. word
-            elseif fmtStyle == "commaSep" then
-                local abs = math.abs(amount)
-                local remain = abs % 1000
-                local concat = {amount >= 0 and "" or "-", abs >= 1000 and string.format("%03d", remain) or remain}
-                while abs >= 1000 do
-                    abs = (abs - remain) / 1000
-                    remain = abs % 1000
-                    table.insert(concat, 2, ",")
-                    table.insert(concat, 2, abs >= 1000 and string.format("%03d", remain) or remain)
-                end
-                text = table.concat(concat)
-            end
-        end
-
         -- color text
-        text = self:TextWithColor(text, school, isPet, isMelee)
+        text = self:TextWithColor(self:FormatNumber(amount), school, isPet, isMelee)
 
         -- add icons
         if (icon ~= "none" and spellID) then
@@ -215,7 +164,7 @@ function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, isPet, isM
 				text = iconText..text..iconText
 			elseif (icon == "left") then
 				text = iconText..text
-			elseif (icon == "right") then
+			else -- if (icon == "right") then
 				text = text..iconText
 			end
         end
@@ -232,14 +181,13 @@ function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, isPet, isM
 end
 
 function ClassicNFCT:MissEvent(guid, spellID, spellSchool, missType, isPet, isMelee)
-    local text
     local icon = self.db.global.style.iconStyle
-
+    
     if (icon == "only") then
         return
     end
-
-   text = self:TextWithColor(self.L.MISS_EVENT_STRINGS[missType], spellSchool, isPet, isMelee)
+    
+    local text = self:TextWithColor(self.L.MISS_EVENT_STRINGS[missType], spellSchool, isPet, isMelee)
 
     -- add icons
     if (icon ~= "none" and spellID) then
@@ -249,7 +197,7 @@ function ClassicNFCT:MissEvent(guid, spellID, spellSchool, missType, isPet, isMe
             text = iconText..text..iconText
         elseif (icon == "left") then
             text = iconText..text
-        elseif (icon == "right") then
+        else -- if (icon == "right") then
             text = text..iconText
         end
     end
