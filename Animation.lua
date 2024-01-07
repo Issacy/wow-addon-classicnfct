@@ -76,41 +76,24 @@ function ClassicNFCT:CreateAnimationGroup()
         if not move then return end
 
         local x, y = self:_pos()
-        if y == 0 then
-            table.insert(x > 0 and self._middle.left or self._middle.right, 1, move)
-            return
-        end
 
-        local dx, dy, pop = 0, 0
-        local wx = x > 0 and 1 or -1
+        local dy, iy, line, pop = 0, 0, self._middle
         local wy = y > 0 and 1 or -1
-        local ud = wy > 0 and self._up or self._down
+        local ud = y > 0 and self._up or self._down
         local n = #ud
-        while true do
-            if dy ~= y then
-                dy = dy + wy
-            elseif dx ~= x then
-                dx = dx + wx
-            end
-            if dy == y and dx == x then break end
-            local line = ud[n - dy * wy + 1]
-            if dx == 0 then
-                pop = line.center
-                line.center = move
-                move = pop
-            else
-                local ix = dx * wx
-                local side = wx > 0 and line.left or line.right
-                pop = side[ix]
-                side[ix] = move
-                move = pop
-            end
+        while dy ~= y and iy < n do
+            dy = dy + wy
+            iy = dy * wy
+            line = ud[iy]
+            pop = line.center
+            line.center = move
+            move = pop
         end
-        local iy = n - dy * wy + 1
-        if iy == 0 then
-            table.insert(ud, 1, {center = move, left = {}, right = {}})
+        if dy ~= y then
+            table.insert(ud, {center = move, left = {}, right = {}})
         else
-            (wx > 0 and ud[iy].left or ud[iy].right)[dx * wx] = move
+            -- for optimize, insert at behind, layout need reverse
+            table.insert(x > 0 and line.left or line.right, move)
         end
     end
 
@@ -118,7 +101,7 @@ function ClassicNFCT:CreateAnimationGroup()
         local un, dn = #self._up, #self._down
         local line = self._middle
 
-        local tx, ty, tr--[[ , tySqr ]]
+        local tx, ty, tr, tySqr
 
         -- up most
         x, y = 0, un + 1
@@ -154,7 +137,7 @@ function ClassicNFCT:CreateAnimationGroup()
         -- for i = un, 1, -1 do
         for i = 1, un do
             line = self._up[i]
-            tx, ty = #line.left + 1, un - i + 1
+            tx, ty = #line.left + 1, i
             tySqr = ty ^ 2
             tr = tx ^ 2 + tySqr
             -- tr = tx + ty
@@ -174,7 +157,7 @@ function ClassicNFCT:CreateAnimationGroup()
         -- for i = dn, 1, -1 do
         for i = 1, dn do
             line = self._down[i]
-            tx, ty = #line.left + 1, -(dn - i + 1)
+            tx, ty = #line.left + 1, -i
             tySqr = ty ^ 2
             tr = tx ^ 2 + tySqr
             -- tr = tx - ty
@@ -222,7 +205,7 @@ function ClassicNFCT:CreateAnimationGroup()
         if ln == 0 and rn == 0 then
             line.center = nil
         else
-            line.center = table.remove(ln > rn and line.left or line.right, 1)
+            line.center = table.remove(ln >= rn and line.left or line.right, 1)
         end
     end
 
@@ -231,7 +214,7 @@ function ClassicNFCT:CreateAnimationGroup()
         if line.center then return end
         local un, dn = #self._up, #self._down
         if un == 0 and dn == 0 then return end
-        self._middle = table.remove(un > dn and self._up or self._down)
+        self._middle = table.remove(un > dn and self._up or self._down, 1)
     end
 
     function anim:_updateUD(lines, now, targetGUID, onScreen)
@@ -253,22 +236,26 @@ function ClassicNFCT:CreateAnimationGroup()
         record.x, record.y = x, y
         this:DoLayout(fontString, record, nameplate, onScreen)
         half = record.width * record.critScale * 0.5 + ANIMATION_HORIZONTAL_PADDING
-        local xl, xr = half, -half
-        for _, fontString in ipairs(line.left) do
+        local xl, xr = -half, half
+        -- for insert optimize, reverse layout
+        local ln, rn = #line.left, #line.right
+        for i = ln, 1, -1 do
+            fontString = line.left[i]
             record = fontString.ClassicNFCT
             half = record.width * record.critScale * 0.5 + ANIMATION_HORIZONTAL_PADDING
-            xl = xl + half
+            xl = xl - half
             record.x, record.y = xl, y
             this:DoLayout(fontString, record, nameplate, onScreen)
-            xl = xl + half
+            xl = xl - half
         end
-        for _, fontString in ipairs(line.right) do
+        for i = rn, 1, -1 do
+            fontString = line.right[i]
             record = fontString.ClassicNFCT
             half = record.width * record.critScale * 0.5 + ANIMATION_HORIZONTAL_PADDING
-            xr = xr - half
+            xr = xr + half
             record.x, record.y = xr, y
             this:DoLayout(fontString, record, nameplate, onScreen)
-            xr = xr - half
+            xr = xr + half
         end
     end
 
@@ -280,10 +267,10 @@ function ClassicNFCT:CreateAnimationGroup()
         self:_layout(self._middle, 0, nameplate, onScreen)
         local lineHeight = this.db.global.layout.lineHeight + ANIMATION_VERTICAL_PADDING
         for i = #self._up, 1, -1 do
-            self:_layout(self._up[i], lineHeight * (#self._up - i + 1), nameplate, onScreen)
+            self:_layout(self._up[i], lineHeight * i, nameplate, onScreen)
         end
         for i = #self._down, 1, -1 do
-            self:_layout(self._down[i], lineHeight * -(#self._down - i + 1), nameplate, onScreen)
+            self:_layout(self._down[i], -lineHeight * i, nameplate, onScreen)
         end
     end
 

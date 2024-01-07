@@ -1,26 +1,8 @@
-#### 2.12.3:
-
-* make text order more stable
-* fix seperated on-screen style
-
-#### 2.12.2:
-
-* optimize performance
-* change max length of truncate number format
-
-#### 2.12.1:
-
-* fix spell blacklist
-
-#### 2.12.0:
+#### 2.12:
 
 * optimize extend shape of fill order used by text animation
 * add spell blacklist
 * pet text color will also be affected if toggle 'Use Damage Type Color', a new pet melee color is being used
-
-#### 2.11.1:
-
-* fix on-screen alpha setting error
 
 #### 2.11:
 

@@ -1,2 +1,1 @@
-* make text order more stable
-* fix seperated on-screen style
+* fix layout in some case and optimize performance
