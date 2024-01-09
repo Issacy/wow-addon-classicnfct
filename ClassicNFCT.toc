@@ -47,7 +47,9 @@ String.lua
 
 ## Main ##
 Animation.lua
-Text.lua
+Command.lua
 DB.lua
-Menu.lua
 Event.lua
+Locale.lua
+Menu.lua
+Text.lua

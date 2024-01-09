@@ -33,6 +33,14 @@ function ClassicNFCT:CreateAnimation()
     self.animUpdateFunc = function() self:AnimateUpdate() end
 end
 
+function ClassicNFCT:ClearAnimation()
+    for _, anim in self.guidToAnim:iter() do
+        anim:clear(self.RecycleFontString)
+    end
+    self.guidToAnim:clear()
+    self.wildAnim:clear(self.RecycleFontString)
+end
+
 function ClassicNFCT:WildFontString(fontString)
     table.insert(self.wilds, fontString)
 end
@@ -341,7 +349,7 @@ function ClassicNFCT:DoAnimate(record, elapsed, targetGUID, onScreen)
         if (targetGUID ~= record.guid and self.db.global.style.useOffTarget) then
             targetStyle = 1
         end
-    elseif (self.db.global.style.useOnScreen) then
+    else
         targetStyle = 2
     end
 
@@ -412,15 +420,54 @@ function ClassicNFCT:DoLayout(fontString, record, nameplate, onScreen)
     fontString:SetPoint("BOTTOM", nameplate, "CENTER", offsetX / record.finalScale, offsetY / record.finalScale)
 end
 
-function ClassicNFCT:AnimateUpdate()
-    local currentScreenHeight = GetScreenHeight()
-    if screenHeight ~= currentScreenHeight then
-        screenHeight = currentScreenHeight
-        self.wildFrame:SetSize(GetScreenWidth(), currentScreenHeight)
+function ClassicNFCT:DisplayText(guid, text, crit, pet, melee)
+    local fontString = self:GetFontString(guid)
+    local record = fontString.ClassicNFCT
+
+    record.text = text
+    fontString:SetText(text)
+    record.textWidth = fontString:GetUnboundedStringWidth()
+
+    record.crit = crit
+    record.pet = pet
+    record.melee = melee
+
+    record.scale = pet and self.db.global.style.pet.scale
+        or (melee and self.db.global.style.autoAttack.scale)
+        or 1
+    
+    record.startTime = GetTime()
+    record.sortIndex = self:NewGlobalIndex()
+
+    if self.db.global.layout.alwaysOnScreen then
+        self:WildFontString(fontString)
+    else
+        local anim = self.guidToAnim:at(guid)
+        if not anim then
+            anim = self:CreateAnimationGroup()
+            self.guidToAnim:emplace(guid, anim)
+        end
+        anim:add(fontString)
     end
 
-    local now, targetGUID, attackableTargetGUID = GetTime(), UnitGUID("target"), self:GetAttackableNamePlateTargetGUID()
-    local attackableTargetAnim = attackableTargetGUID and self.guidToAnim:at(attackableTargetGUID)
+    self:AnimateUpdate()
+end
+
+function ClassicNFCT:AnimateUpdate_OnScreenOnly()
+    for guid, anim in self.guidToAnim:iter() do
+        anim:clear(self.WildFontString)
+    end
+    self.guidToAnim:clear()
+    if #(self.wilds) > 0 then
+        table.sort(self.wilds, FontStringSorter)
+        for _, fontString in ipairs(self.wilds) do self.wildAnim:add(fontString) end
+        self.wilds = {}
+    end
+end
+
+function ClassicNFCT:AnimateUpdate_NameplateBased()
+    -- local attackableTargetGUID = self:GetAttackableNamePlateTargetGUID()
+    local attackableTargetAnim -- = attackableTargetGUID and self.guidToAnim:at(attackableTargetGUID)
     
     for guid, anim in self.guidToAnim:iter() do
         local _, nameplate = self:GetNamePlateForGUID(guid)
@@ -479,6 +526,22 @@ function ClassicNFCT:AnimateUpdate()
         for _, fontString in ipairs(self.wilds) do anim:add(fontString) end
         self.wilds = {}
     end
+end
+
+function ClassicNFCT:AnimateUpdate()
+    local currentScreenHeight = GetScreenHeight()
+    if screenHeight ~= currentScreenHeight then
+        screenHeight = currentScreenHeight
+        self.wildFrame:SetSize(GetScreenWidth(), currentScreenHeight)
+    end
+
+    if self.db.global.layout.alwaysOnScreen then
+        self:AnimateUpdate_OnScreenOnly()
+    else
+        self:AnimateUpdate_NameplateBased()
+    end
+
+    local now, targetGUID = GetTime(), UnitGUID("target")
     
     for guid, anim in self.guidToAnim:iter() do
         local _, nameplate = self:GetNamePlateForGUID(guid)

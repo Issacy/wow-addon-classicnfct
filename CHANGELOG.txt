@@ -1,1 +1,2 @@
-* fix layout in some case and optimize performance
+* now can always show all damage on-screen
+* add min damage filter, ignore no damage (missing, etc.) 

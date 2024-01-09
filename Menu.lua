@@ -13,7 +13,7 @@ function ClassicNFCT:CreateMenu()
             name = L.UI["Enable"],
             desc = L.UI["If the addon is enabled"],
             get = "IsEnabled",
-            set = function(_, newValue) if (not newValue) then self:Disable() else self:Enable() end end,
+            set = function(_, newValue) self:UpdateEnable(newValue) end,
             order = 1,
             width = "half",
         },
@@ -164,17 +164,63 @@ function ClassicNFCT:CreateMenu()
                             if newValue == nil then return end
                             self.db.global.layout.onScreenPos.centerOffsetY = newValue
                         end,
-                        order = 1,
+                        order = 2,
                     },
                 }
-            }
+            },
+            alwaysOnScreen = {
+                type = 'toggle',
+                name = L.UI["Always Show Text on Screen"],
+                desc = '',
+                get = function() return self.db.global.layout.alwaysOnScreen end,
+                set = function(_, newValue) self.db.global.layout.alwaysOnScreen = newValue end,
+                order = 4,
+            },
+        }
+    }
+
+    menu.args.total.args.filter = {
+        type = 'group',
+        name = L.UI["Filter"],
+        order = 7,
+        args = {
+            spellBlacklist = {
+                type = 'input',
+                name = L.UI["Spell Blacklist"],
+                desc = L.UI["Spell ID or Name Seperated by Vertical bar (|)\nSpecial tags: spell|melee|pet|pet_spell|pet_melee"],
+                multiline = 3,
+                get = function() return self.db.global.filter.spellBlacklist end,
+                set = function(_, newValue) self:UpdateSpellBlacklist(newValue) end,
+                order = 1,
+                width = 'full',
+            },
+            minDmg = {
+                type = 'input',
+                name = L.UI["Min Damage"],
+                desc = "",
+                get = function() return tostring(self.db.global.filter.minDmg) end,
+                set = function(_, newValue)
+                    newValue = tonumber(newValue)
+                    if newValue == nil then return end
+                    self.db.global.filter.minDmg = math.max(math.floor(newValue), 0)
+                end,
+                order = 2,
+            },
+            ignoreNoDmg = {
+                type = 'toggle',
+                name = L.UI["Ignore No Damage"],
+                desc = "",
+                get = function() return self.db.global.filter.ignoreNoDmg end,
+                set = function(_, newValue) self.db.global.filter.ignoreNoDmg = newValue end,
+                order = 3,
+            },
         }
     }
 
     menu.args.total.args.style = {
         type = 'group',
-        name = L.UI["Text Style"],
-        order = 7,
+        name = L.UI["Style"],
+        order = 8,
         inline = true,
         args = {
             numStyle = {
@@ -202,16 +248,6 @@ function ClassicNFCT:CreateMenu()
                 set = function(_, newValue) self.db.global.style.dmgTypeColor = newValue end,
                 order = 3,
             },
-            spellBlacklist = {
-                type = 'input',
-                name = L.UI["Spell Blacklist"],
-                desc = L.UI["Spell ID or Name Seperated by Vertical bar (|)\nSpecial tags: spell|melee|pet|pet_spell|pet_melee"],
-                multiline = 3,
-                get = function() return self.spellBlacklistForMenu end,
-                set = function(_, newValue) self:UpdateSpellBlacklistForDB(newValue) end,
-                order = 4,
-                width = 'full',
-            },
             scale = {
                 type = 'range',
                 name = L.UI["Scale"],
@@ -221,7 +257,7 @@ function ClassicNFCT:CreateMenu()
                 step = .01,
                 get = function() return self.db.global.style.scale end,
                 set = function(_, newValue) self.db.global.style.scale = newValue end,
-                order = 5,
+                order = 4,
             },
             alpha = {
                 type = 'range',
@@ -232,32 +268,30 @@ function ClassicNFCT:CreateMenu()
                 step = .01,
                 get = function() return self.db.global.style.alpha end,
                 set = function(_, newValue) self.db.global.style.alpha = newValue end,
-                order = 6,
+                order = 5,
             },
             petScale = {
                 type = 'range',
-                name = L.UI["Pet Text Scale (Based on Target)"],
-                desc = "",
+                name = L.UI["Pet Text Scale"],
+                desc = L.UI["Scale based on Target"],
                 min = .01,
                 max = 5,
                 step = .01,
                 get = function() return self.db.global.style.pet.scale end,
                 set = function(_, newValue) self.db.global.style.pet.scale = newValue end,
-                order = 7,
-                width = "full",
+                order = 6,
             },
 
             autoAttackScale = {
                 type = 'range',
-                name = L.UI["Auto-Attack Text Scale (Based on Target)"],
-                desc = "",
+                name = L.UI["Auto-Attack Text Scale"],
+                desc = L.UI["Scale based on Target"],
                 min = .01,
                 max = 5,
                 step = .01,
                 get = function() return self.db.global.style.autoAttack.scale end,
                 set = function(_, newValue) self.db.global.style.autoAttack.scale = newValue end,
                 order = 7,
-                width = "full",
             },
 
             useOffTarget = {
@@ -300,20 +334,10 @@ function ClassicNFCT:CreateMenu()
                     },
                 },
             },
-            useOnScreen = {
-                type = 'toggle',
-                name = L.UI["Use Seperate On-Screen Text Style"],
-                desc = "",
-                get = function() return self.db.global.style.useOnScreen end,
-                set = function(_, newValue) self.db.global.style.useOnScreen = newValue end,
-                order = 10,
-                width = "full",
-            },
             onScreen = {
                 type = 'group',
                 name = L.UI["On-Screen Text Style"],
-                hidden = function() return not self.db.global.style.useOnScreen end,
-                order = 11,
+                order = 10,
                 inline = true,
                 args = {
                     scale = {
@@ -348,7 +372,5 @@ function ClassicNFCT:CreateMenu()
 end
 
 function ClassicNFCT:OpenMenu()
-    -- just open to the frame, double call because blizz bug
-    InterfaceOptionsFrame_OpenToCategory(self.menu)
     InterfaceOptionsFrame_OpenToCategory(self.menu)
 end

@@ -28,14 +28,20 @@ local defaults = {
             onScreenPos = {
                 centerOffsetX = 0,
                 centerOffsetY = 200,
-            }
+            },
+            alwaysOnScreen = false,
+        },
+
+        filter = {
+            spellBlacklist = "",
+            minDmg = 0,
+            ignoreNoDmg = false,
         },
         
         style = {
             numStyle = "commaSep",
             iconStyle = "none",
             dmgTypeColor = false,
-            spellBlacklist = {},
             scale = 1,
             alpha = 1,
             pet = { scale = 0.7, },
@@ -47,10 +53,9 @@ local defaults = {
                 alpha = 0.5,
             },
     
-            useOnScreen = false,
             onScreen = {
-                scale = 1,
-                alpha = 1,
+                scale = 0.75,
+                alpha = 0.5,
             },
         },
     },
@@ -58,26 +63,34 @@ local defaults = {
 
 function ClassicNFCT:CreateDB()
     self.db = LibStub("AceDB-3.0"):New("ClassicNFCTDB", defaults, true)
-    self.spellBlacklist = {}
-    for _, v in ipairs(self.db.global.style.spellBlacklist) do
-        self.spellBlacklist[v] = true
+    self:RestoreDBFromOldVersion()
+    self:UpdateSpellBlacklist(self.db.global.filter.spellBlacklist)
+end
+
+function ClassicNFCT:RestoreDBFromOldVersion()
+    if self.db.global.style.spellBlacklist then
+        self.db.global.filter.spellBlacklist = table.concat(self.db.global.style.spellBlacklist, '|')
+        self.db.global.style.spellBlacklist = nil
     end
-    self:GenerateSpellBlacklistForMenu()
 end
 
-function ClassicNFCT:GenerateSpellBlacklistForMenu()
-    self.spellBlacklistForMenu = table.concat(self.db.global.style.spellBlacklist, '|')
-end
-
-function ClassicNFCT:UpdateSpellBlacklistForDB(newValueString)
-    local db, t = {}, {}
-    for v in self:SplitString(newValueString, '|+') do
+function ClassicNFCT:UpdateSpellBlacklist(newValue)
+    local l, t = {}, {}
+    for v in self:SplitString(newValue, '|+') do
         v = v:lower()
-        table.insert(db, v)
+        table.insert(l, v)
         t[v] = true
     end
-    self.db.global.style.spellBlacklist = db
+    self.db.global.filter.spellBlacklist = table.concat(l, '|')
     self.spellBlacklist = t
-    self:GenerateSpellBlacklistForMenu()
+end
+
+function ClassicNFCT:UpdateEnable(enabled)
+    self.db.global.enabled = enabled
+    if enabled then
+        self:OnEnable()
+    else
+        self:OnDisable()
+    end
 end
 

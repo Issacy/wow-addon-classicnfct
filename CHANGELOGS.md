@@ -1,12 +1,13 @@
+#### 2.13:
+
+* now can always show all damage on-screen
+* add min damage filter, ignore no damage (missing, etc.)
+
 #### 2.12:
 
 * optimize extend shape of fill order used by text animation
 * add spell blacklist
 * pet text color will also be affected if toggle 'Use Damage Type Color', a new pet melee color is being used
-
-#### 2.11:
-
-* fix off-target and on-screen alpha & scale
 
 #### 2.10:
 

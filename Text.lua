@@ -123,36 +123,6 @@ function ClassicNFCT:TextWithColor(text, school, isPet, isMelee)
     return "|Cff".. textColor .. text .. "|r"
 end
 
-function ClassicNFCT:DisplayText(guid, text, crit, pet, melee)
-    local anim = self.guidToAnim:at(guid)
-    if not anim then
-        anim = self:CreateAnimationGroup()
-        self.guidToAnim:emplace(guid, anim)
-    end
-
-    local fontString = self:GetFontString(guid)
-    local record = fontString.ClassicNFCT
-
-    record.text = text
-    fontString:SetText(text)
-    record.textWidth = fontString:GetUnboundedStringWidth()
-
-    record.crit = crit
-    record.pet = pet
-    record.melee = melee
-
-    record.scale = pet and self.db.global.style.pet.scale
-        or (melee and self.db.global.style.autoAttack.scale)
-        or 1
-    
-    record.startTime = GetTime()
-    record.sortIndex = self:NewGlobalIndex()
-    -- self:RefFontString(fontString)
-    anim:add(fontString)
-
-    self:AnimateUpdate()
-end
-
 function ClassicNFCT:FormatNumber(amount)
     local fmtStyle = self.db.global.style.numStyle
     

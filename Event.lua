@@ -1,34 +1,29 @@
 local _
 
 function ClassicNFCT:OnInitialize()
-    local L = LibStub('AceLocale-3.0'):GetLocale("ClassicNFCT")
-    L.UI = setmetatable(L.UI or {}, { __index = function(t, k) return k end, })
-    self.L = L
-
+    self:CreateLocale()
+    
+    UIParent:SetFrameStrata("BACKGROUND")
+    UIParent:SetFrameLevel(0)
+    
     self.unitToGuid = self:CreateMap()
     self.guidToUnit = self:CreateMap()
     self.playerGUID = UnitGUID("player")
-
+    
     -- setup db
     self:CreateDB()
-
+    
     self:CreateText()
     self:CreateAnimation()
-
-    -- setup chat commands
-    self:RegisterChatCommand("cnfct", "OpenMenu")
+    
+    self:CreateCmd()
 
     -- setup menu
     self:CreateMenu()
 
     self.dynamicEvents = {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_TARGET_CHANGED"}
 
-    -- if the addon is turned off in db, turn it off
-    if not self.db.global.enabled then
-        self:Disable()
-    else
-        self:Enable()
-    end
+    self:UpdateEnable(self.db.global.enabled)
     
     self:RegisterEvent("NAME_PLATE_UNIT_ADDED")
     self:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
@@ -40,19 +35,13 @@ function ClassicNFCT:OnEnable()
     for _, event in pairs(self.dynamicEvents) do
         self:RegisterEvent(event)
     end
-    self.db.global.enabled = true
 end
 
 function ClassicNFCT:OnDisable()
     for _, event in pairs(self.dynamicEvents) do
         self:UnregisterEvent(event)
     end
-    for _, anim in self.guidToAnim:iter() do
-        anim:clear()
-    end
-    self.guidToAnim:clear()
-    self.wildAnim:clear()
-    self.db.global.enabled = false
+    self:ClearAnimation()
 end
 
 function ClassicNFCT:NAME_PLATE_UNIT_ADDED(event, unitID)
@@ -148,6 +137,9 @@ function ClassicNFCT:CombatFilter_Miss(clue, destGUID, isPet, ...)
 end
 
 function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, isPet, isMelee)
+    local minDmg = self.db.global.filter.minDmg
+    if minDmg > 0 and amount < minDmg then return end
+
     local text
     
     local icon = self.db.global.style.iconStyle
@@ -181,6 +173,8 @@ function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, isPet, isM
 end
 
 function ClassicNFCT:MissEvent(guid, spellID, spellSchool, missType, isPet, isMelee)
+    if self.db.global.filter.ignoreNoDmg then return end
+    
     local icon = self.db.global.style.iconStyle
     
     if (icon == "only") then
