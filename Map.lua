@@ -1,29 +1,30 @@
-function ClassicNFCT:CreateMap()
-    local inner = {len = 0, cnt = 0, index = {}, container = {}, version = 0}
-    local map = {__inner = inner}
+local cache
 
-    function map:gc(force)
+function ClassicNFCT:CreateMap()
+    if not cache then cache = self:CreatePool(function() return {} end) end
+    
+    local inner = {len = 0, cnt = 0, index = {}, container = {}, version = 0}
+    local map = {}
+
+    function map:trim(force)
         if not force and (inner.len == 0 or inner.len - inner.cnt < inner.cnt) then return end
-        local container = {}
         local len = 0
-        if inner.cnt > 0 then
-            for i = 1, inner.len do
-                local ret = inner.container[i]
-                if ret then
-                    len = len + 1
-                    container[len] = ret
-                    inner.index[ret[1]] = len
-                end
+        for i = 1, inner.len do
+            local kv = inner.container[i]
+            if kv then
+                len = len + 1
+                inner.container[i] = nil
+                inner.container[len] = kv
+                inner.index[kv[1]] = len
             end
         end
-        inner.container = container
         inner.len = len
         inner.version = inner.version + 1
     end
     function map:count() return inner.cnt end
     function map:iter()
         local i = 1
-        local ret
+        local kv
         local version = inner.version
         return function()
             if inner.version ~= version then error("gc triggered during iter") end
@@ -31,12 +32,12 @@ function ClassicNFCT:CreateMap()
                 if i > inner.len then
                     return
                 end
-                ret = inner.container[i]
-                if ret then break end
+                kv = inner.container[i]
+                if kv then break end
                 i = i + 1
             end
             i = i + 1
-            return ret[1], ret[2]
+            return kv[1], kv[2]
         end
     end
     function map:emplace(key, val)
@@ -47,19 +48,23 @@ function ClassicNFCT:CreateMap()
             return
         end
         inner.len = inner.len + 1
-        inner.container[inner.len] = {key, val}
+        local kv = cache:get()
+        kv[1] = key
+        kv[2] = val
+        inner.container[inner.len] = kv
         inner.index[key] = inner.len
         inner.cnt = inner.cnt + 1
     end
-    function map:remove(key, nogc)
+    function map:remove(key, trim)
         local idx = inner.index[key]
         if not idx then return end
-        local ret = inner.container[idx]
+        local kv = inner.container[idx]
+        cache:release(kv)
         inner.container[idx] = nil
         inner.index[key] = nil
         inner.cnt = inner.cnt - 1
-        if not nogc then self:gc() end
-        return ret[2]
+        if trim == nil or trim then self:trim() end
+        return kv[2]
     end
     function map:at(key)
         local idx = inner.index[key]
@@ -68,10 +73,16 @@ function ClassicNFCT:CreateMap()
     end
     function map:clear()
         if inner.cnt > 0 then
-            inner.container = {}
+            for i = 1, inner.len do
+                local kv = inner.container[i]
+                if kv then
+                    cache:release(kv)
+                    inner.container[i] = nil
+                end
+            end
+            wipe(inner.index)
             inner.cnt = 0
             inner.len = 0
-            inner.index = {}
         end
     end
     return map

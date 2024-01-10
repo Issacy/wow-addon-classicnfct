@@ -52,6 +52,6 @@ L.UI = {
 	["Icon"] = "Значок",
 	["Scale"] = "Масштаб",
     ["Alpha"] = "Прозрачность",
-    ["Pet Text Scale (Based on Target)"] = "Масштаб текста для пета (в зависимости от цели)",
-    ["Auto-Attack Text Scale (Based on Target)"] = "Масштаб текста автоатаки (в зависимости от цели)",
+    ["Pet Text Scale"] = "Масштаб текста для пета",
+    ["Auto-Attack Text Scale"] = "Масштаб текста автоатаки",
 }

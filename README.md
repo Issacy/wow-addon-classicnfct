@@ -1,6 +1,6 @@
 ## Classic Nameplate-based Floating Combat Text
 
-Some code referred from [Nameplate Scrolling Combat Text](https://www.curseforge.com/wow/addons/nameplate-scrolling-combat-text)
+Special thanks for the inspiration from: [Nameplate Scrolling Combat Text](https://www.curseforge.com/wow/addons/nameplate-scrolling-combat-text)
 
 ### Options:
 
@@ -11,10 +11,13 @@ Some code referred from [Nameplate Scrolling Combat Text](https://www.curseforge
   * vertical distance of nameplate
   * line height
   * on-screen text position
+* Damage Filter:
+  * Spell blacklist
+  * min damage filter
+  * ignore no-damage (miss, etc.)
 * Change style:
   * Number format style, add (or only) icon
   * Colored by damage type
-  * Spell blacklist
   * Scale & alpha, additional options for pet/auto-attack/off-target/on-screen
 
 ### Change Logs:

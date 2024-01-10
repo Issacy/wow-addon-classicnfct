@@ -58,8 +58,6 @@ function ClassicNFCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
     local guid = self.unitToGuid:at(unitID)
     if not guid then return end
     
-    local anim = self.guidToAnim:at(guid)
-
     self.unitToGuid:remove(unitID)
     self.guidToUnit:remove(guid)
 end
@@ -75,17 +73,17 @@ end
 function ClassicNFCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
     local isMelee
 	if self.playerGUID == sourceGUID then -- Player events
-        if (string.find(clue, "_DAMAGE")) then
+        if (clue:find("_DAMAGE")) then
             return self:CombatFilter_Damage(clue, destGUID, false, ...)
-        elseif (string.find(clue, "_MISSED")) then
+        elseif (clue:find("_MISSED")) then
             return self:CombatFilter_Miss(clue, destGUID, false, ...)
         end
     elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)
         and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0
     then -- Pet/Guardian events
-        if (string.find(clue, "_DAMAGE")) then
+        if (clue:find("_DAMAGE")) then
             return self:CombatFilter_Damage(clue, destGUID, true, ...)
-        elseif (string.find(clue, "_MISSED")) then
+        elseif (clue:find("_MISSED")) then
             -- Don't show pet MISS events for now.
             return self:CombatFilter_Miss(clue, destGUID, true, ...)
         end
@@ -95,10 +93,10 @@ end
 function ClassicNFCT:CombatFilter_Damage(clue, destGUID, isPet, ...)
     local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand
     local isMelee
-    if (string.find(clue, "SWING")) then
+    if (clue:find("SWING")) then
         amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...
         isMelee = true
-    elseif (string.find(clue, "ENVIRONMENTAL")) then
+    elseif (clue:find("ENVIRONMENTAL")) then
         -- spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...
         return
     else
@@ -117,10 +115,10 @@ end
 function ClassicNFCT:CombatFilter_Miss(clue, destGUID, isPet, ...)
     local spellID, spellName, spellSchool, missType, isOffHand, amountMissed
     local isMelee
-    if (string.find(clue, "SWING")) then
+    if (clue:find("SWING")) then
         missType, isOffHand, amountMissed = ...
         isMelee = true
-    elseif (string.find(clue, "ENVIRONMENTAL")) then
+    elseif (clue:find("ENVIRONMENTAL")) then
         -- spellName, missType, isOffHand, amountMissed = ...
         return
     else

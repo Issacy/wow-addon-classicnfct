@@ -3,72 +3,10 @@ local SharedMedia = LibStub("LibSharedMedia-3.0")
 local truncateWords = {"", "K", "M", "B"}
 
 local fontName, fontFlag, fontSize
-local fontPath
+local fontPath, fontVersion
+local cache, frame, sortIndex
 
-function ClassicNFCT:CreateText()
-    self.cache = {}
-    self.frame = CreateFrame("Frame", nil, UIParent)
-end
-
-function ClassicNFCT:GetFontPath(fontName)
-    local fontPath = SharedMedia:Fetch("font", fontName)
-
-    if (fontPath == nil) then
-        fontPath = "Fonts\\FRIZQT__.TTF"
-    end
-
-    return fontPath
-end
-
-function ClassicNFCT:GetFontString(guid)
-    local fontString, record
-    local newFontName, newFontFlag, newFontSize = self.db.global.font.choice, self.db.global.font.flag, self.db.global.font.size
-    if (newFontName ~= fontName or newFontFlag ~= fontFlag or newFontSize ~= fontSize) then
-        fontName, fontFlag, fontSize = newFontName, newFontFlag, newFontSize
-        fontPath = self:GetFontPath(fontName)
-        for _, fontString in ipairs(self.cache) do
-            fontString:SetFont(fontPath, fontSize, fontFlag)
-        end
-    end
-
-    if (next(self.cache)) then
-        fontString = table.remove(self.cache)
-    else
-        fontString = self.frame:CreateFontString()
-        fontString:SetFont(fontPath, fontSize, fontFlag)
-        fontString:SetParent(self.frame)
-        -- fontString:SetIgnoreParentScale(false)
-        fontString:SetIgnoreParentAlpha(true)
-        fontString.ClassicNFCT = {}
-    end
-
-    record = fontString.ClassicNFCT
-    record.guid = guid
-    record.fontSize = FONT_SIZE
-    record.fontFlag = self.db.global.font.flag
-    fontString:SetText("")
-    fontString:SetAlpha(1)
-    fontString:SetScale(1)
-    if self.db.global.font.shadow then
-        fontString:SetShadowOffset(1, -1)
-    else
-        fontString:SetShadowOffset(0, 0)
-    end
-    fontString:Show()
-
-    return fontString
-end
-
-function ClassicNFCT:RecycleFontString(fontString)
-    fontString.ClassicNFCT = {}
-    
-    fontString:SetAlpha(0)
-    fontString:ClearAllPoints()
-    fontString:SetParent(self.frame)
-    fontString:Hide()
-
-    table.insert(self.cache, fontString)
-end
+local fmtConcat = {}
 
 local SCHOOL_MASK_PHYSICAL = 2 ^ 0
 local SCHOOL_MASK_HOLY = 2 ^ 1
@@ -95,6 +33,76 @@ local DAMAGE_TYPE_COLORS_SIMPLE = {
     ["pet_melee"] = "CCCCCC",
 }
 
+function ClassicNFCT:CreateText()
+    fontVersion = self:CreateBigInt()
+    cache = self:CreatePool(function()
+        local fontString = frame:CreateFontString()
+        fontString:SetParent(frame)
+        -- fontString:SetIgnoreParentScale(false)
+        fontString:SetIgnoreParentAlpha(true)
+        fontString.ClassicNFCT = { version = self:CreateBigInt(), sortIndex = self:CreateBigInt() }
+        return fontString
+    end)
+    frame = CreateFrame("Frame", nil, UIParent)
+    sortIndex = self:CreateBigInt()
+    self.fontStringSorter = function(a, b)
+        return a.ClassicNFCT.sortIndex:compare(b.ClassicNFCT.sortIndex) < 0 
+    end
+end
+
+function ClassicNFCT:GetFontPath(fontName)
+    local fontPath = SharedMedia:Fetch("font", fontName)
+
+    if (fontPath == nil) then
+        fontPath = "Fonts\\FRIZQT__.TTF"
+    end
+
+    return fontPath
+end
+
+function ClassicNFCT:GetFontString(guid, text)
+    local fontString, record
+    local newFontName, newFontFlag, newFontSize = self.db.global.font.choice, self.db.global.font.flag, self.db.global.font.size
+    if (newFontName ~= fontName or newFontFlag ~= fontFlag or newFontSize ~= fontSize) then
+        fontName, fontFlag, fontSize = newFontName, newFontFlag, newFontSize
+        fontPath = self:GetFontPath(fontName)
+        fontVersion:increment()
+    end
+
+    local fontString = cache:get()
+    local record = fontString.ClassicNFCT
+    if record.version:compare(fontVersion) ~= 0 then
+        fontString:SetFont(fontPath, fontSize, fontFlag)
+        record.version:copy(fontVersion)
+    end
+    
+    fontString:SetText(text)
+    fontString:SetAlpha(1)
+    fontString:SetScale(1)
+    if self.db.global.font.shadow then
+        fontString:SetShadowOffset(1, -1)
+    else
+        fontString:SetShadowOffset(0, 0)
+    end
+    fontString:Show()
+    
+    sortIndex:increment()
+    record.sortIndex:copy(sortIndex)
+    record.guid = guid
+    record.startTime = GetTime()
+    record.textWidth = fontString:GetUnboundedStringWidth()
+
+    return fontString
+end
+
+function ClassicNFCT:RecycleFontString(fontString)
+    fontString:SetAlpha(0)
+    fontString:ClearAllPoints()
+    fontString:SetParent(frame)
+    fontString:Hide()
+    cache:release(fontString)
+end
+
 function ClassicNFCT:TextWithColor(text, school, isPet, isMelee)
     -- color text
     local textColor
@@ -109,9 +117,9 @@ function ClassicNFCT:TextWithColor(text, school, isPet, isMelee)
         for k, v in pairs(DAMAGE_TYPE_COLORS) do
             if bit.band(k, school) ~= 0 then
                 c = c + 1
-                r = r + tonumber(string.sub(v, 1, 2), 16)
-                g = g + tonumber(string.sub(v, 3, 4), 16)
-                b = b + tonumber(string.sub(v, 5, 6), 16)
+                r = r + tonumber(v:sub(1, 2), 16)
+                g = g + tonumber(v:sub(3, 4), 16)
+                b = b + tonumber(v:sub(5, 6), 16)
             end
         end
         if c == 0 then
@@ -148,11 +156,11 @@ function ClassicNFCT:FormatNumber(amount)
             text = tostring(abs)
         else
             text = string.format("%.2f", abs)
-            local textLen = string.len(text)
+            local textLen = text:len()
             if textLen >= 6 then
-                text = string.sub(text, 1, -4)
+                text = text:sub(1, -4)
             elseif textLen == 5 then
-                text = string.sub(text, 1, -2)
+                text = text:sub(1, -2)
             end
         end
         return sym .. text .. word
@@ -160,13 +168,15 @@ function ClassicNFCT:FormatNumber(amount)
     
     -- if fmtStyle == "commaSep" then
         local remain = abs % 1000
-        local concat = {sym, abs >= 1000 and string.format("%03d", remain) or remain}
+        wipe(fmtConcat)
+        fmtConcat[1] = sym
+        fmtConcat[2] = abs >= 1000 and string.format("%03d", remain) or remain
         while abs >= 1000 do
             abs = (abs - remain) / 1000
             remain = abs % 1000
-            table.insert(concat, 2, ",")
-            table.insert(concat, 2, abs >= 1000 and string.format("%03d", remain) or remain)
+            table.insert(fmtConcat, 2, ",")
+            table.insert(fmtConcat, 2, abs >= 1000 and string.format("%03d", remain) or remain)
         end
-        return table.concat(concat)
+        return table.concat(fmtConcat)
     -- end
 end
