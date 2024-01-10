@@ -28,4 +28,4 @@ Special thanks for the inspiration from: [Nameplate Scrolling Combat Text](https
 
 Because of addon limitations, I cannot know nameplate's screen position, miss many informations like out of screen, moving speed.
 
-Welcome for posting or emailing me (lote.mac@icloud.com) any solution for this.
+Welcome for posting any solution or pulling request for this.
