@@ -1,2 +1,1 @@
-* optimize GC and performance
-* optimize text order 
+* fix frame strata

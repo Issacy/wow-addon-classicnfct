@@ -1,14 +1,14 @@
 local _
 
+local unitToGuid, guidToUnit
+local playerGUID
+
 function ClassicNFCT:OnInitialize()
     self:CreateLocale()
     
-    UIParent:SetFrameStrata("BACKGROUND")
-    UIParent:SetFrameLevel(0)
-    
-    self.unitToGuid = self:CreateMap()
-    self.guidToUnit = self:CreateMap()
-    self.playerGUID = UnitGUID("player")
+    unitToGuid = self:CreateMap()
+    guidToUnit = self:CreateMap()
+    playerGUID = UnitGUID("player")
     
     -- setup db
     self:CreateDB()
@@ -49,17 +49,17 @@ function ClassicNFCT:NAME_PLATE_UNIT_ADDED(event, unitID)
     local guid = UnitGUID(unitID)
     if not guid then return end
 
-    self.unitToGuid:emplace(unitID, guid)
-    self.guidToUnit:emplace(guid, unitID)
+    unitToGuid:emplace(unitID, guid)
+    guidToUnit:emplace(guid, unitID)
 end
 
 function ClassicNFCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
     if not unitID then return end
-    local guid = self.unitToGuid:at(unitID)
+    local guid = unitToGuid:at(unitID)
     if not guid then return end
     
-    self.unitToGuid:remove(unitID)
-    self.guidToUnit:remove(guid)
+    unitToGuid:remove(unitID)
+    guidToUnit:remove(guid)
 end
 
 function ClassicNFCT:PLAYER_TARGET_CHANGED(event, unitID)
@@ -72,7 +72,7 @@ end
 
 function ClassicNFCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
     local isMelee
-	if self.playerGUID == sourceGUID then -- Player events
+	if playerGUID == sourceGUID then -- Player events
         if (clue:find("_DAMAGE")) then
             return self:CombatFilter_Damage(clue, destGUID, false, ...)
         elseif (clue:find("_MISSED")) then
@@ -201,7 +201,7 @@ function ClassicNFCT:GetNamePlateForGUID(guid)
     local unit, nameplate
     repeat
         if not guid then break end
-        unit = self.guidToUnit:at(guid)
+        unit = guidToUnit:at(guid)
         if not unit or UnitIsDead(unit) then break end
         nameplate = C_NamePlate.GetNamePlateForUnit(unit)
         if not nameplate or not nameplate:IsShown() then
@@ -213,7 +213,7 @@ end
 
 function ClassicNFCT:GetAttackableNamePlateTargetGUID()
     local targetGUID = UnitGUID("target")
-    for unit, guid in self.unitToGuid:iter() do
+    for unit, guid in unitToGuid:iter() do
         if guid == targetGUID then
             if UnitIsDead(unit) or not UnitCanAttack("player", "target") then return end
             local nameplate = C_NamePlate.GetNamePlateForUnit(unit)

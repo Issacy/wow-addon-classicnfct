@@ -9,6 +9,9 @@ local ANIMATION_CRIT_SCALE_PERCENT = 0.1
 local ANIMATION_CRIT_MAX_SCALE = 3
 local ANIMATION_CRIT_MIN_SCALE = 2.5
 local ANIMATION_CRIT_SCALE_UP_PERCENT = 0.2
+
+local FRAME_STRATA = "BACKGROUND"
+local FRAME_LEVEL = 0
 local LAYER = "BACKGROUND"
 local LAYER_SUBLEVEL_PET = -8
 local LAYER_SUBLEVEL_PET_CRIT = -7
@@ -36,6 +39,8 @@ function ClassicNFCT:CreateAnimation()
     wildAnim = self:CreateAnimationGroup()
     wildFrame = CreateFrame("Frame", nil, UIParent)
     wildFrame:SetPoint("CENTER")
+    wildFrame:SetFrameStrata(FRAME_STRATA)
+    wildFrame:SetFrameLevel(FRAME_LEVEL)
     animUpdateFunc = function() self:AnimateUpdate() end
 end
 
