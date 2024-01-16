@@ -41,7 +41,7 @@ Localization\Localization.xml
 Entry.lua
 
 ## Utils ##
-BigInt.lua.lua
+BigInt.lua
 Map.lua
 Pool.lua
 String.lua

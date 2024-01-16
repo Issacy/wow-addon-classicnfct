@@ -1,1 +1,2 @@
-* fix frame strata
+* fix addon loading bug
+* extend pet damage source types

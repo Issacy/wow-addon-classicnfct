@@ -78,9 +78,10 @@ function ClassicNFCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, des
         elseif (clue:find("_MISSED")) then
             return self:CombatFilter_Miss(clue, destGUID, false, ...)
         end
-    elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)
-        and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0
-    then -- Pet/Guardian events
+    elseif
+        -- bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0) and
+        not sourceGUID or sourceGUID:len() == 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0
+    then -- Pet/Guardian/etc. events
         if (clue:find("_DAMAGE")) then
             return self:CombatFilter_Damage(clue, destGUID, true, ...)
         elseif (clue:find("_MISSED")) then
