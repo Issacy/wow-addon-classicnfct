@@ -2,8 +2,8 @@ local SharedMedia = LibStub("LibSharedMedia-3.0")
 
 local truncateWords = {"", "K", "M", "B"}
 
-local fontName, fontFlag, fontSize
-local fontPath, fontVersion
+local fontPath, fontName, fontFlag, fontSize
+local fontVersion, fontTest
 local cache, frame, sortIndex
 
 local fmtConcat = {}
@@ -34,7 +34,7 @@ local DAMAGE_TYPE_COLORS_SIMPLE = {
 }
 
 function ClassicNFCT:CreateText()
-    fontVersion = self:CreateBigInt()
+    frame = CreateFrame("Frame", nil, UIParent)
     cache = self:CreatePool(function()
         local fontString = frame:CreateFontString()
         fontString:SetParent(frame)
@@ -43,29 +43,23 @@ function ClassicNFCT:CreateText()
         fontString.ClassicNFCT = { version = self:CreateBigInt(), sortIndex = self:CreateBigInt() }
         return fontString
     end)
-    frame = CreateFrame("Frame", nil, UIParent)
     sortIndex = self:CreateBigInt()
     self.fontStringSorter = function(a, b)
         return a.ClassicNFCT.sortIndex:compare(b.ClassicNFCT.sortIndex) < 0 
     end
-end
-
-function ClassicNFCT:GetFontPath(fontName)
-    local fontPath = SharedMedia:Fetch("font", fontName)
-
-    if (fontPath == nil) then
-        fontPath = "Fonts\\FRIZQT__.TTF"
-    end
-
-    return fontPath
+    fontVersion = self:CreateBigInt()
+    fontTest = cache:get()
+    fontTest:SetAlpha(0)
+    fontTest:Hide()
 end
 
 function ClassicNFCT:GetFontString(guid, text)
-    local fontString, record
     local newFontName, newFontFlag, newFontSize = self.db.global.font.choice, self.db.global.font.flag, self.db.global.font.size
     if (newFontName ~= fontName or newFontFlag ~= fontFlag or newFontSize ~= fontSize) then
-        fontName, fontFlag, fontSize = newFontName, newFontFlag, newFontSize
-        fontPath = self:GetFontPath(fontName)
+        local newFontPath = SharedMedia:Fetch("font", newFontName)
+        local succ1, succ2 = pcall(fontTest.SetFont, fontTest, newFontPath, newFontSize, newFontFlag)
+        if not succ1 or not succ2 then return self:ShowDialog("FONT_INVALID") end
+        fontPath, fontName, fontFlag, fontSize = newFontPath, newFontName, newFontFlag, newFontSize
         fontVersion:increment()
     end
 

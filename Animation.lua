@@ -450,6 +450,8 @@ end
 
 function ClassicNFCT:DisplayText(guid, text, crit, pet, melee)
     local fontString = self:GetFontString(guid, text)
+    if not fontString then return end
+
     local record = fontString.ClassicNFCT
 
     record.crit = crit

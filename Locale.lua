@@ -6,5 +6,6 @@ function ClassicNFCT:CreateLocale()
     local L = LibStub('AceLocale-3.0'):GetLocale("ClassicNFCT")
     L.UI = Create(L.UI)
     L.CMD = Create(L.CMD)
+    L.DIALOG = Create(L.DIALOG)
     self.L = L
 end

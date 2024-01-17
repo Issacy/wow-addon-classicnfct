@@ -3,12 +3,16 @@ local _
 local unitToGuid, guidToUnit
 local playerGUID
 
+local DYNAMIC_EVENTS = {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_TARGET_CHANGED"}
+
 function ClassicNFCT:OnInitialize()
     self:CreateLocale()
-    
+
     unitToGuid = self:CreateMap()
     guidToUnit = self:CreateMap()
     playerGUID = UnitGUID("player")
+
+    self:CreateDialog()
     
     -- setup db
     self:CreateDB()
@@ -21,24 +25,22 @@ function ClassicNFCT:OnInitialize()
     -- setup menu
     self:CreateMenu()
 
-    self.dynamicEvents = {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_TARGET_CHANGED"}
-
-    self:UpdateEnable(self.db.global.enabled)
-    
     self:RegisterEvent("NAME_PLATE_UNIT_ADDED")
     self:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+    self:RegisterEvent("PLAYER_REGEN_DISABLED")
+    self:RegisterEvent("PLAYER_REGEN_ENABLED")
 
-    self:ChangeBlizzardFCT()
+    self:SetEnableToDB(self.db.global.enabled)
 end
 
-function ClassicNFCT:OnEnable()
-    for _, event in pairs(self.dynamicEvents) do
+function ClassicNFCT:RegisterDynamicEvents()
+    for _, event in pairs(DYNAMIC_EVENTS) do
         self:RegisterEvent(event)
     end
 end
 
-function ClassicNFCT:OnDisable()
-    for _, event in pairs(self.dynamicEvents) do
+function ClassicNFCT:UnregisterDynamicEvents()
+    for _, event in pairs(DYNAMIC_EVENTS) do
         self:UnregisterEvent(event)
     end
     self:ClearAnimation()
@@ -60,6 +62,14 @@ function ClassicNFCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
     
     unitToGuid:remove(unitID)
     guidToUnit:remove(guid)
+end
+
+function ClassicNFCT:PLAYER_REGEN_DISABLED()
+    self:HideInCombatDialog()
+end
+
+function ClassicNFCT:PLAYER_REGEN_ENABLED()
+    self:ShowInCombatDialog()
 end
 
 function ClassicNFCT:PLAYER_TARGET_CHANGED(event, unitID)
@@ -222,8 +232,4 @@ function ClassicNFCT:GetAttackableNamePlateTargetGUID()
             return guid
         end
     end
-end
-
-function ClassicNFCT:ChangeBlizzardFCT(enabled)
-    SetCVar("floatingCombatTextCombatDamage", self.db.global.blzDisabled and "0" or "1")
 end

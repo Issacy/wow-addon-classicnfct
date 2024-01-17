@@ -66,7 +66,7 @@ L.UI = {
 	["Number Style"] = "数字样式",
 	["Icon Style"] = "图标样式",
 	["Color by Damage Type"] = "根据伤害类型着色",
-	["Spell ID or Name Seperated by Vertical bar (|)\nSpecial tags: spell|melee|pet|pet_spell|pet_melee"] = "法术ID或名称 竖线分隔（|）\n特殊标签: spell|melee|pet|pet_spell|pet_melee",
+	["Spell ID or Name Seperated by Vertical bar (|)\nSpecial tags: spell|melee|pet|pet_spell|pet_melee"] = "法术ID或名称 竖线分隔 (|)\n特殊标签: spell|melee|pet|pet_spell|pet_melee",
 	["Scale"] = "缩放",
     ["Alpha"] = "透明度",
     ["Pet Text Scale"] = "宠物文字缩放",
@@ -85,4 +85,8 @@ L.CMD = {
     ["Disable addon"] = "禁用插件",
     ["Show text on screen"] = "在屏上显示文字",
     ["Show text on nameplate"] = "在姓名版上显示文字",
+}
+
+L.DIALOG = {
+    ["ClassicNFCT: Font is invalid, please select another one"] = "ClassicNFCT: 字体无效, 请选择另一种字体"
 }

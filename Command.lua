@@ -11,12 +11,12 @@ function ClassicNFCT:CreateCmd()
         {
             cmd = 'on',
             desc = L.CMD['Enable addon'],
-            func = function() self:UpdateEnable(true) end,
+            func = function() self:SetEnableToDB(true) end,
         },
         {
             cmd = 'off',
             desc = L.CMD['Disable addon'],
-            func = function() self:UpdateEnable(false) end,
+            func = function() self:SetEnableToDB(false) end,
         },
         {
             cmd = 'onscreen',

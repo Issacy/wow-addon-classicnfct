@@ -61,10 +61,14 @@ local defaults = {
     },
 }
 
+local spellBlacklistConcat = {}
+
 function ClassicNFCT:CreateDB()
     self.db = LibStub("AceDB-3.0"):New("ClassicNFCTDB", defaults, true)
     self:RestoreDBFromOldVersion()
-    self:UpdateSpellBlacklist(self.db.global.filter.spellBlacklist)
+    self.spellBlacklist = {}
+    self:SetBlzFctToDB(self.db.global.blzDisabled)
+    self:SetSpellBlacklistToDB(self.db.global.filter.spellBlacklist)
 end
 
 function ClassicNFCT:RestoreDBFromOldVersion()
@@ -74,23 +78,27 @@ function ClassicNFCT:RestoreDBFromOldVersion()
     end
 end
 
-function ClassicNFCT:UpdateSpellBlacklist(newValue)
-    local l, t = {}, {}
-    for v in self:SplitString(newValue, '|+') do
-        v = v:lower()
-        table.insert(l, v)
-        t[v] = true
-    end
-    self.db.global.filter.spellBlacklist = table.concat(l, '|')
-    self.spellBlacklist = t
-end
-
-function ClassicNFCT:UpdateEnable(enabled)
+function ClassicNFCT:SetEnableToDB(enabled)
     self.db.global.enabled = enabled
     if enabled then
-        self:OnEnable()
+        self:RegisterDynamicEvents()
     else
-        self:OnDisable()
+        self:UnregisterDynamicEvents()
     end
 end
 
+function ClassicNFCT:SetBlzFctToDB(disabled)
+    self.db.global.blzDisabled = disabled
+    SetCVar("floatingCombatTextCombatDamage", disabled and "0" or "1")
+end
+
+function ClassicNFCT:SetSpellBlacklistToDB(newValue)
+    wipe(spellBlacklistConcat)
+    wipe(self.spellBlacklist)
+    for v in self:SplitString(newValue, '|+') do
+        v = v:lower()
+        table.insert(spellBlacklistConcat, v)
+        self.spellBlacklist[v] = true
+    end
+    self.db.global.filter.spellBlacklist = table.concat(spellBlacklistConcat, '|')
+end

@@ -1,2 +1,2 @@
-* fix addon loading bug
-* extend pet damage source types
+* fix incorrect option states in addon option menu
+* pop a warn dialog when font invalid instead of cause lua error

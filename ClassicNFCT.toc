@@ -50,6 +50,7 @@ String.lua
 Animation.lua
 Command.lua
 DB.lua
+Dialog.lua
 Event.lua
 Locale.lua
 Menu.lua

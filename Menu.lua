@@ -12,8 +12,8 @@ function ClassicNFCT:CreateMenu()
             type = 'toggle',
             name = L.UI["Enable"],
             desc = L.UI["If the addon is enabled"],
-            get = "IsEnabled",
-            set = function(_, newValue) self:UpdateEnable(newValue) end,
+            get = function() return self.db.global.enabled end,
+            set = function(_, newValue) self:SetEnableToDB(newValue) end,
             order = 1,
             width = "half",
         },
@@ -22,12 +22,9 @@ function ClassicNFCT:CreateMenu()
             name = L.UI["Disable Blizzard FCT"],
             desc = "",
             get = function() return self.db.global.blzDisabled end,
-            set = function(_, newValue)
-                self.db.global.blzDisabled = newValue
-                self:ChangeBlizzardFCT()
-            end,
+            set = function(_, newValue) self:SetBlzFctToDB(newValue) end,
             order = 2,
-            width = "half",
+            width = "double",
         },
     }
 
@@ -102,7 +99,7 @@ function ClassicNFCT:CreateMenu()
                 type = 'toggle',
                 name = L.UI["Shadow"],
                 get = function() return self.db.global.font.shadow end,
-                set = function(_, newValue) self.db.global.font.hadow = newValue end,
+                set = function(_, newValue) self.db.global.font.shadow = newValue end,
                 order = 4,
             },
         },
@@ -190,7 +187,7 @@ function ClassicNFCT:CreateMenu()
                 desc = L.UI["Spell ID or Name Seperated by Vertical bar (|)\nSpecial tags: spell|melee|pet|pet_spell|pet_melee"],
                 multiline = 3,
                 get = function() return self.db.global.filter.spellBlacklist end,
-                set = function(_, newValue) self:UpdateSpellBlacklist(newValue) end,
+                set = function(_, newValue) self:SetSpellBlacklistToDB(newValue) end,
                 order = 1,
                 width = 'full',
             },

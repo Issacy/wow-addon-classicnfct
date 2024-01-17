@@ -86,3 +86,7 @@ L.CMD = {
     ["Show text on screen"] = "在屏上顯示文字",
     ["Show text on nameplate"] = "在姓名版上顯示文字",
 }
+
+L.DIALOG = {
+    ["ClassicNFCT: Font is invalid, please select another one"] = "ClassicNFCT: 字體無效, 請選擇另一種字體"
+}
