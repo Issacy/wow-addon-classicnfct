@@ -37,6 +37,11 @@ local defaults = {
             minDmg = 0,
             ignoreNoDmg = false,
         },
+
+        limit = {
+            total = 0,
+            perOffTarget = 0,
+        }
         
         style = {
             numStyle = "commaSep",
@@ -96,8 +101,10 @@ function ClassicNFCT:SetSpellBlacklistToDB(newValue)
     wipe(spellBlacklistConcat)
     wipe(self.spellBlacklist)
     for v in self:SplitString(newValue, '|+') do
-        v = v:lower()
+        v = strtrim(v:lower())
         table.insert(spellBlacklistConcat, v)
+        n = tonumber(v)
+        if n then v = n end
         self.spellBlacklist[v] = true
     end
     self.db.global.filter.spellBlacklist = table.concat(spellBlacklistConcat, '|')

@@ -18,7 +18,7 @@ Special thanks for the inspiration from: [Nameplate Scrolling Combat Text](https
 * Change style:
   * Number format style, add (or only) icon
   * Colored by damage type
-  * Scale & alpha, additional options for pet/auto-attack/off-target/on-screen
+  * Scale & alpha, additional options for pet/auto-attack/Non-Target/on-screen
 
 ### Change Logs:
 

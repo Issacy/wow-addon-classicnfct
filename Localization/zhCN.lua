@@ -63,6 +63,11 @@ L.UI = {
     ["Spell Blacklist"] = "法术黑名单",
     ["Min Damage"] = "最小伤害",
     ["Ignore No Damage"] = "忽略无伤害",
+    ["Limit Damage Numbers"] = "伤害数量限制",
+    ["Total"] = "总限制",
+    ["Except for current target, 0 means no limit"] = "当前目标除外，0代表不限制",
+    ["Per Non-Target"] = "每个非目标",
+    ["0 means no limit"] = "0代表不限制",
 	["Number Style"] = "数字样式",
 	["Icon Style"] = "图标样式",
 	["Color by Damage Type"] = "根据伤害类型着色",
@@ -72,8 +77,8 @@ L.UI = {
     ["Pet Text Scale"] = "宠物文字缩放",
     ["Auto-Attack Text Scale"] = "自动攻击文字缩放",
     ["Scale based on Target"] = "缩放基于目标",
-	["Use Seperate Off-Target Text Style"] = "使用独立的副目标文字样式",
-	["Off-Target Text Style"] = "副目标文字样式",
+	["Use Seperate Non-Target Text Style"] = "使用独立的非目标文字样式",
+	["Non-Target Text Style"] = "非目标文字样式",
 	["On-Screen Text Style"] = "屏上文字样式",
 }
 

@@ -594,13 +594,13 @@ function ClassicNFCT:AnimateUpdate()
     local func = frame:GetScript("OnUpdate")
     if stopUpdate then
         if func then
-            -- nothing in the animation list, so just kill the onupdate
+            -- nothing in the animation list, so just kill the OnUpdate
             frame:SetScript("OnUpdate", nil)
         end
         return
     end
 
-    -- start onupdate if it's not already running
+    -- start OnUpdate if it's not already running
     if not func then
         frame:SetScript("OnUpdate", animUpdateFunc)
     end

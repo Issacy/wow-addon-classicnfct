@@ -1,3 +1,7 @@
+#### 2.14:
+
+* Add optional damage numbers limitation, when dealing damage to a large number of enemies, it should help prevent lag
+
 #### 2.13:
 
 * now can always show all damage on-screen

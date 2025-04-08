@@ -1,7 +1,10 @@
 local _
 
 local unitToGuid, guidToUnit
-local playerGUID
+local playerGUID, targetGUID
+local combatEventOffTargetCounts = {}
+local combatEventTotalCount = 0
+local lastUpdateTime
 
 local DYNAMIC_EVENTS = {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_TARGET_CHANGED"}
 
@@ -90,7 +93,7 @@ function ClassicNFCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, des
         end
     elseif
         -- bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0) and
-        not sourceGUID or sourceGUID:len() == 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0
+        bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0
     then -- Pet/Guardian/etc. events
         if (clue:find("_DAMAGE")) then
             return self:CombatFilter_Damage(clue, destGUID, true, ...)
@@ -120,6 +123,9 @@ function ClassicNFCT:CombatFilter_Damage(clue, destGUID, isPet, ...)
         if (self.spellBlacklist.pet) or (isMelee and self.spellBlacklist.pet_melee) or (not isMelee and self.spellBlacklist.pet_spell) then return end
     end
     if self.spellBlacklist[tostring(spellID)] or self.spellBlacklist[tostring(spellName)] then return end
+    local minDmg = self.db.global.filter.minDmg
+    if minDmg > 0 and amount < minDmg then return end
+    if self:SkipEvent(destGUID) then return end
     self:DamageEvent(destGUID, spellID, amount, school, critical, isPet, isMelee)
 end
 
@@ -141,16 +147,35 @@ function ClassicNFCT:CombatFilter_Miss(clue, destGUID, isPet, ...)
     else
         if (self.spellBlacklist.pet) or (isMelee and self.spellBlacklist.pet_melee) or (not isMelee and self.spellBlacklist.pet_spell) then return end
     end
-    if self.spellBlacklist[tostring(spellID)] or self.spellBlacklist[tostring(spellName)] then return end
+    if self.spellBlacklist[spellID] or self.spellBlacklist[spellName] then return end
+    if self.db.global.filter.ignoreNoDmg then return end
+    if self:SkipEvent(destGUID) then return end
     self:MissEvent(destGUID, spellID, spellSchool, missType, isPet, isMelee)
 end
 
-function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, isPet, isMelee)
-    local minDmg = self.db.global.filter.minDmg
-    if minDmg > 0 and amount < minDmg then return end
+function ClassicNFCT:SkipEvent(destGUID)
+    local total = self.db.global.limit.total
+    local perOffTarget = self.db.global.limit.perOffTarget
+    if total == 0 and perOffTarget == 0 then return false end
+    local now = GetTime()
+    if not lastUpdateTime or now ~= lastUpdateTime then
+        lastUpdateTime = now
+        wipe(combatEventOffTargetCounts)
+        combatEventTotalCount = 0
+        targetGUID = UnitGUID("target")
+        return false
+    end
+    if destGUID == targetGUID then return false end
+    if total > 0 and combatEventTotalCount >= total then return true end
+    combatEventTotalCount = combatEventTotalCount + 1
+    local offTargetCount = combatEventOffTargetCounts[destGUID] or 0
+    if perOffTarget > 0 and offTargetCount >= perOffTarget then return true end
+    combatEventOffTargetCounts[destGUID] = offTargetCount + 1
+    return false
+end
 
+function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, isPet, isMelee)
     local text
-    
     local icon = self.db.global.style.iconStyle
 
     if (icon ~= "only") then
@@ -182,8 +207,6 @@ function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, isPet, isM
 end
 
 function ClassicNFCT:MissEvent(guid, spellID, spellSchool, missType, isPet, isMelee)
-    if self.db.global.filter.ignoreNoDmg then return end
-    
     local icon = self.db.global.style.iconStyle
     
     if (icon == "only") then

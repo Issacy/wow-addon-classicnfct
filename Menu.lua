@@ -146,7 +146,7 @@ function ClassicNFCT:CreateMenu()
                         get = function() return tostring(self.db.global.layout.onScreenPos.centerOffsetX) end,
                         set = function(_, newValue)
                             newValue = tonumber(newValue)
-                            if newValue == nil then return end
+                            if not newValue then return end
                             self.db.global.layout.onScreenPos.centerOffsetX = newValue
                         end,
                         order = 1,
@@ -158,7 +158,7 @@ function ClassicNFCT:CreateMenu()
                         get = function() return tostring(self.db.global.layout.onScreenPos.centerOffsetY) end,
                         set = function(_, newValue)
                             newValue = tonumber(newValue)
-                            if newValue == nil then return end
+                            if not newValue then return end
                             self.db.global.layout.onScreenPos.centerOffsetY = newValue
                         end,
                         order = 2,
@@ -198,7 +198,7 @@ function ClassicNFCT:CreateMenu()
                 get = function() return tostring(self.db.global.filter.minDmg) end,
                 set = function(_, newValue)
                     newValue = tonumber(newValue)
-                    if newValue == nil then return end
+                    if not newValue then return end
                     self.db.global.filter.minDmg = math.max(math.floor(newValue), 0)
                 end,
                 order = 2,
@@ -214,10 +214,42 @@ function ClassicNFCT:CreateMenu()
         }
     }
 
+    menu.args.total.args.limit = {
+        type = 'group',
+        name = L.UI["Limit Damage Numbers"],
+        order = 8,
+        args = {
+            total = {
+                type = 'input',
+                name = L.UI["Total"],
+                desc = L.UI["Except for current target, 0 means no limit"],
+                get = function() return tostring(self.db.global.limit.total) end,
+                set = function(_, newValue)
+                    newValue = tonumber(newValue)
+                    if not newValue then return end
+                    self.db.global.limit.total = math.max(math.floor(newValue), 0)
+                end,
+                order = 4,
+            },
+            perOffTarget = {
+                type = 'input',
+                name = L.UI["Per Non-Target"],
+                desc = L.UI["0 means no limit"],
+                get = function() return tostring(self.db.global.limit.perOffTarget) end,
+                set = function(_, newValue)
+                    newValue = tonumber(newValue)
+                    if not newValue then return end
+                    self.db.global.limit.perOffTarget = math.max(math.floor(newValue), 0)
+                end,
+                order = 2,
+            },
+        }
+    }
+
     menu.args.total.args.style = {
         type = 'group',
         name = L.UI["Style"],
-        order = 8,
+        order = 9,
         inline = true,
         args = {
             numStyle = {
@@ -293,7 +325,7 @@ function ClassicNFCT:CreateMenu()
 
             useOffTarget = {
                 type = 'toggle',
-                name = L.UI["Use Seperate Off-Target Text Style"],
+                name = L.UI["Use Seperate Non-Target Text Style"],
                 desc = "",
                 get = function() return self.db.global.style.useOffTarget end,
                 set = function(_, newValue) self.db.global.style.useOffTarget = newValue end,
@@ -302,7 +334,7 @@ function ClassicNFCT:CreateMenu()
             },
             offTarget = {
                 type = 'group',
-                name = L.UI["Off-Target Text Style"],
+                name = L.UI["Non-Target Text Style"],
                 hidden = function() return not self.db.global.style.useOffTarget end,
                 order = 9,
                 inline = true,
@@ -316,7 +348,7 @@ function ClassicNFCT:CreateMenu()
                         step = .01,
                         get = function() return self.db.global.style.offTarget.scale end,
                         set = function(_, newValue) self.db.global.style.offTarget.scale = newValue end,
-                        order = 2,
+                        order = 1,
                     },
                     alpha = {
                         type = 'range',
@@ -327,7 +359,7 @@ function ClassicNFCT:CreateMenu()
                         step = .01,
                         get = function() return self.db.global.style.offTarget.alpha end,
                         set = function(_, newValue) self.db.global.style.offTarget.alpha = newValue end,
-                        order = 3,
+                        order = 2,
                     },
                 },
             },
@@ -346,7 +378,7 @@ function ClassicNFCT:CreateMenu()
                         step = .01,
                         get = function() return self.db.global.style.onScreen.scale end,
                         set = function(_, newValue) self.db.global.style.onScreen.scale = newValue end,
-                        order = 2,
+                        order = 1,
                     },
                     alpha = {
                         type = 'range',
@@ -357,7 +389,7 @@ function ClassicNFCT:CreateMenu()
                         step = .01,
                         get = function() return self.db.global.style.onScreen.alpha end,
                         set = function(_, newValue) self.db.global.style.onScreen.alpha = newValue end,
-                        order = 3,
+                        order = 2,
                     },
                 },
             },

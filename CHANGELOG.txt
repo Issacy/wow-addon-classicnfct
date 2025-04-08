@@ -1,3 +1,2 @@
-* adapt game version of 10.2.5
-* (2.13.4) fix incorrect option states in addon option menu
-* (2.13.4) pop a warn dialog when font invalid instead of cause lua error
+* adapt game version of 11.1.0
+* Add optional damage numbers limitation, when dealing damage to a large number of enemies, it should help prevent lag
