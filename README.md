@@ -15,10 +15,11 @@ Special thanks for the inspiration from: [Nameplate Scrolling Combat Text](https
   * Spell blacklist
   * min damage filter
   * ignore no-damage (miss, etc.)
+* Optional Damage numbers limitation for better performance
 * Change style:
   * Number format style, add (or only) icon
   * Colored by damage type
-  * Scale & alpha, additional options for pet/auto-attack/Non-Target/on-screen
+  * Scale & alpha, additional options for pet/auto-attack/not-targeting/on-screen
 
 ### Change Logs:
 

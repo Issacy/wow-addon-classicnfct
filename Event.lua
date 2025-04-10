@@ -1,10 +1,13 @@
 local _
 
-local unitToGuid, guidToUnit
-local playerGUID, targetGUID
-local combatEventOffTargetCounts = {}
-local combatEventTotalCount = 0
-local lastUpdateTime
+local unitToGuid, guidToUnit, playerGUID
+local combatEventRecord = {
+    total = 0,
+    offTargets = 0,
+    perOffTarget = {}
+}
+
+local COMBAT_EVENT_RECORD_RESET_INTERVAL = 1.0 / (120 * 1.5)
 
 local DYNAMIC_EVENTS = {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_TARGET_CHANGED"}
 
@@ -155,22 +158,26 @@ end
 
 function ClassicNFCT:SkipEvent(destGUID)
     local total = self.db.global.limit.total
+    local offTargets = self.db.global.limit.offTargets
     local perOffTarget = self.db.global.limit.perOffTarget
-    if total == 0 and perOffTarget == 0 then return false end
+    if total == 0 and offTargets == 0 and perOffTarget == 0 then return false end
     local now = GetTime()
-    if not lastUpdateTime or now ~= lastUpdateTime then
-        lastUpdateTime = now
-        wipe(combatEventOffTargetCounts)
-        combatEventTotalCount = 0
-        targetGUID = UnitGUID("target")
-        return false
+    if not combatEventRecord.lastUpdateTime or (now - combatEventRecord.lastUpdateTime >= COMBAT_EVENT_RECORD_RESET_INTERVAL) then
+        combatEventRecord.lastUpdateTime = now
+        combatEventRecord.targetGUID = UnitGUID("target")
+        combatEventRecord.total = 0
+        combatEventRecord.offTargets = 0
+        wipe(combatEventRecord.perOffTarget)
     end
-    if destGUID == targetGUID then return false end
-    if total > 0 and combatEventTotalCount >= total then return true end
-    combatEventTotalCount = combatEventTotalCount + 1
-    local offTargetCount = combatEventOffTargetCounts[destGUID] or 0
-    if perOffTarget > 0 and offTargetCount >= perOffTarget then return true end
-    combatEventOffTargetCounts[destGUID] = offTargetCount + 1
+    if destGUID == combatEventRecord.targetGUID then return false end
+    if total > 0 and combatEventRecord.total >= total then return true end
+    combatEventRecord.total = combatEventRecord.total + 1
+    local theOffTarget = combatEventRecord.perOffTarget[destGUID]
+    if not theOffTarget and offTargets > 0 and combatEventRecord.offTargets >= offTargets then return true end
+    combatEventRecord.offTargets = combatEventRecord.offTargets + 1
+    theOffTarget = theOffTarget or 0
+    if perOffTarget > 0 and theOffTarget >= perOffTarget then return true end
+    combatEventRecord.perOffTarget[destGUID] = theOffTarget + 1
     return false
 end
 

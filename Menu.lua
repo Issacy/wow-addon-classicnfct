@@ -216,7 +216,7 @@ function ClassicNFCT:CreateMenu()
 
     menu.args.total.args.limit = {
         type = 'group',
-        name = L.UI["Limit Damage Numbers"],
+        name = L.UI["Count Limitation"],
         order = 8,
         args = {
             total = {
@@ -229,11 +229,23 @@ function ClassicNFCT:CreateMenu()
                     if not newValue then return end
                     self.db.global.limit.total = math.max(math.floor(newValue), 0)
                 end,
-                order = 4,
+                order = 1,
             },
             perOffTarget = {
                 type = 'input',
-                name = L.UI["Per Non-Target"],
+                name = L.UI["Count of Not-Targeting"],
+                desc = L.UI["0 means no limit"],
+                get = function() return tostring(self.db.global.limit.offTargets) end,
+                set = function(_, newValue)
+                    newValue = tonumber(newValue)
+                    if not newValue then return end
+                    self.db.global.limit.offTargets = math.max(math.floor(newValue), 0)
+                end,
+                order = 2,
+            },
+            perOffTarget = {
+                type = 'input',
+                name = L.UI["Count per Not-Targeting"],
                 desc = L.UI["0 means no limit"],
                 get = function() return tostring(self.db.global.limit.perOffTarget) end,
                 set = function(_, newValue)
@@ -241,7 +253,7 @@ function ClassicNFCT:CreateMenu()
                     if not newValue then return end
                     self.db.global.limit.perOffTarget = math.max(math.floor(newValue), 0)
                 end,
-                order = 2,
+                order = 3,
             },
         }
     }
@@ -325,7 +337,7 @@ function ClassicNFCT:CreateMenu()
 
             useOffTarget = {
                 type = 'toggle',
-                name = L.UI["Use Seperate Non-Target Text Style"],
+                name = L.UI["Use Standalone Not-Target Text Style"],
                 desc = "",
                 get = function() return self.db.global.style.useOffTarget end,
                 set = function(_, newValue) self.db.global.style.useOffTarget = newValue end,
@@ -334,7 +346,7 @@ function ClassicNFCT:CreateMenu()
             },
             offTarget = {
                 type = 'group',
-                name = L.UI["Non-Target Text Style"],
+                name = L.UI["Not-Targeting Text Style"],
                 hidden = function() return not self.db.global.style.useOffTarget end,
                 order = 9,
                 inline = true,

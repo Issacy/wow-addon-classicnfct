@@ -6,7 +6,7 @@ local L = LibStub('AceLocale-3.0'):NewLocale("ClassicNFCT", 'enUS', true, 'raw')
 
 L.numStyles = {
     ["truncate"] = "Truncate",
-    ["commaSep"] = "Comma Seperate",
+    ["commaSep"] = "Thousands Separator",
     ["disable"] = "Disable",
 }
 

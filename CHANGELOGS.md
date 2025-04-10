@@ -1,6 +1,6 @@
 #### 2.14:
 
-* Add optional damage numbers limitation, when dealing damage to a large number of enemies, it should help prevent lag
+* Add optional count limitation of combat texts, when dealing damage to a large number of enemies, it should help prevent lag
 
 #### 2.13:
 

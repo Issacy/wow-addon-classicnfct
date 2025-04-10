@@ -7,7 +7,7 @@ if not L then return end
 
 L.numStyles = {
     ["truncate"] = "縮短",
-    ["commaSep"] = "分隔符",
+    ["commaSep"] = "千分位",
     ["disable"] = "無",
 }
 
@@ -63,10 +63,11 @@ L.UI = {
 	["Spell Blacklist"] = "法術黑名單",
     ["Min Damage"] = "最小傷害",
     ["Ignore No Damage"] = "忽略無傷害",
-    ["Limit Damage Numbers"] = "傷害數量限制",
+    ["Count Limitation"] = "數量限制",
     ["Total"] = "總限制",
     ["Except for current target, 0 means no limit"] = "當前目標除外，0代表不限制",
-    ["Per Non-Target"] = "每個非目標",
+    ["Count of Not-Targeting"] = "非當前目標個數",
+    ["Count per Not-Targeting"] = "每個非當前目標",
     ["0 means no limit"] = "0代表不限制",
 	["Number Style"] = "數字樣式",
 	["Icon Style"] = "圖標樣式",
@@ -77,8 +78,8 @@ L.UI = {
     ["Pet Text Scale"] = "寵物文字縮放",
     ["Auto-Attack Text Scale"] = "自動攻擊文字縮放",
     ["Scale based on Target"] = "縮放基於目標",
-	["Use Seperate Non-Target Text Style"] = "使用獨立的非目標文字樣式",
-	["Non-Target Text Style"] = "非目標文字樣式",
+	["Use Standalone Not-Targeting Text Style"] = "使用獨立的非當前目標文字樣式",
+	["Not-Targeting Text Style"] = "非當前目標文字樣式",
 	["On-Screen Text Style"] = "屏上文字樣式",
 }
 

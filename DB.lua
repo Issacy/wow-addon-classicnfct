@@ -40,9 +40,10 @@ local defaults = {
 
         limit = {
             total = 0,
+            offTargets = 0,
             perOffTarget = 0,
-        }
-        
+        },
+
         style = {
             numStyle = "commaSep",
             iconStyle = "none",
