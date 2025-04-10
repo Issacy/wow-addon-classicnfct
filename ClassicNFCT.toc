@@ -12,7 +12,7 @@
 
 ## SavedVariables: ClassicNFCTDB
 
-## Notes: Classic nameplate-based floating combat text.
+## Notes: Classic nameplate floating combat text
 ## Notes-zhCN: 基于姓名版的仿经典浮动战斗数字
 ## Notes-zhTW: 基於姓名版的仿經典浮動戰鬥數字
 

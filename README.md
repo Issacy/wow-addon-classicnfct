@@ -1,4 +1,4 @@
-## Classic Nameplate-based Floating Combat Text
+## Classic Nameplate Floating Combat Text
 
 Special thanks for the inspiration from: [Nameplate Scrolling Combat Text](https://www.curseforge.com/wow/addons/nameplate-scrolling-combat-text)
 
@@ -15,7 +15,7 @@ Special thanks for the inspiration from: [Nameplate Scrolling Combat Text](https
   * Spell blacklist
   * min damage filter
   * ignore no-damage (miss, etc.)
-* Optional Damage numbers limitation for better performance
+* Optional count limitation of combat texts, for better performance
 * Change style:
   * Number format style, add (or only) icon
   * Colored by damage type
