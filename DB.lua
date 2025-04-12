@@ -7,21 +7,21 @@ local defaults = {
         enabled = true,
         blzDisabled = true,
 
-        
+
         font = {
             choice = defaultFont,
             flag = "",
             size = 30,
             shadow = true,
         },
-        
+
         animations = {
             animationDuration = 1.5,
             -- critpercent = 0.15,
             -- animMaxLines = 5,
             -- animationCount = 80,
         },
-        
+
         layout = {
             distance = 25,
             lineHeight = 45,
@@ -36,6 +36,7 @@ local defaults = {
             spellBlacklist = "",
             minDmg = 0,
             ignoreNoDmg = false,
+            sumSameSpell = false,
         },
 
         limit = {
@@ -52,13 +53,13 @@ local defaults = {
             alpha = 1,
             pet = { scale = 0.7, },
             autoAttack = { scale = 0.7, },
-            
+
             useOffTarget = true,
             offTarget = {
                 scale = 0.75,
                 alpha = 0.5,
             },
-    
+
             onScreen = {
                 scale = 0.75,
                 alpha = 0.5,
@@ -81,6 +82,9 @@ function ClassicNFCT:RestoreDBFromOldVersion()
     if self.db.global.style.spellBlacklist then
         self.db.global.filter.spellBlacklist = table.concat(self.db.global.style.spellBlacklist, '|')
         self.db.global.style.spellBlacklist = nil
+    end
+    if self.db.global.style.iconStyle == 'only' then
+        self.db.global.style.iconStyle = 'left'
     end
 end
 

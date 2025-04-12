@@ -1,6 +1,7 @@
 #### 2.14:
 
 * Add optional count limitation of combat texts, when dealing damage to a large number of enemies, it should help prevent lag
+* Can optionally sum the same spell damage amount
 
 #### 2.13:
 

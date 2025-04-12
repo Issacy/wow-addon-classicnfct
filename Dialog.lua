@@ -1,3 +1,5 @@
+local _
+
 local dialogs = {}
 local inCombat = false
 
@@ -14,7 +16,7 @@ function ClassicNFCT:CreateDialog()
             enterClicksFirstButton = true,
         }
     }
-    
+
     for key, dialog in pairs(dialogs) do
         dialog.show = 0
         dialog.key = "ClassicNFCT_" .. key

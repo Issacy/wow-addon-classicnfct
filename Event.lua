@@ -1,15 +1,14 @@
 local _
 
+local DYNAMIC_EVENTS = {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_TARGET_CHANGED"}
+local COMBAT_EVENT_RECORD_RESET_INTERVAL = 1.0 / (120 * 1.5)
+
 local unitToGuid, guidToUnit, playerGUID
 local combatEventRecord = {
     total = 0,
     offTargets = 0,
     perOffTarget = {}
 }
-
-local COMBAT_EVENT_RECORD_RESET_INTERVAL = 1.0 / (120 * 1.5)
-
-local DYNAMIC_EVENTS = {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_TARGET_CHANGED"}
 
 function ClassicNFCT:OnInitialize()
     self:CreateLocale()
@@ -19,13 +18,13 @@ function ClassicNFCT:OnInitialize()
     playerGUID = UnitGUID("player")
 
     self:CreateDialog()
-    
+
     -- setup db
     self:CreateDB()
-    
+
     self:CreateText()
     self:CreateAnimation()
-    
+
     self:CreateCmd()
 
     -- setup menu
@@ -65,7 +64,7 @@ function ClassicNFCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
     if not unitID then return end
     local guid = unitToGuid:at(unitID)
     if not guid then return end
-    
+
     unitToGuid:remove(unitID)
     guidToUnit:remove(guid)
 end
@@ -88,7 +87,7 @@ end
 
 function ClassicNFCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
     local isMelee
-	if playerGUID == sourceGUID then -- Player events
+    if playerGUID == sourceGUID then -- Player events
         if (clue:find("_DAMAGE")) then
             return self:CombatFilter_Damage(clue, destGUID, false, ...)
         elseif (clue:find("_MISSED")) then
@@ -125,11 +124,11 @@ function ClassicNFCT:CombatFilter_Damage(clue, destGUID, isPet, ...)
     else
         if (self.spellBlacklist.pet) or (isMelee and self.spellBlacklist.pet_melee) or (not isMelee and self.spellBlacklist.pet_spell) then return end
     end
-    if self.spellBlacklist[tostring(spellID)] or self.spellBlacklist[tostring(spellName)] then return end
+    if (spellID and self.spellBlacklist[spellID]) or (spellName and self.spellBlacklist[spellName]) then return end
     local minDmg = self.db.global.filter.minDmg
     if minDmg > 0 and amount < minDmg then return end
     if self:SkipEvent(destGUID) then return end
-    self:DamageEvent(destGUID, spellID, amount, school, critical, isPet, isMelee)
+    self:DamageText(destGUID, spellID, amount, nil, school, critical, isPet, isMelee)
 end
 
 function ClassicNFCT:CombatFilter_Miss(clue, destGUID, isPet, ...)
@@ -150,10 +149,10 @@ function ClassicNFCT:CombatFilter_Miss(clue, destGUID, isPet, ...)
     else
         if (self.spellBlacklist.pet) or (isMelee and self.spellBlacklist.pet_melee) or (not isMelee and self.spellBlacklist.pet_spell) then return end
     end
-    if self.spellBlacklist[spellID] or self.spellBlacklist[spellName] then return end
+    if (spellID and self.spellBlacklist[spellID]) or (spellName and self.spellBlacklist[spellName]) then return end
     if self.db.global.filter.ignoreNoDmg then return end
     if self:SkipEvent(destGUID) then return end
-    self:MissEvent(destGUID, spellID, spellSchool, missType, isPet, isMelee)
+    self:DamageText(destGUID, spellID, 0, missType, spellSchool, false, isPet, isMelee)
 end
 
 function ClassicNFCT:SkipEvent(destGUID)
@@ -181,63 +180,6 @@ function ClassicNFCT:SkipEvent(destGUID)
     return false
 end
 
-function ClassicNFCT:DamageEvent(guid, spellID, amount, school, crit, isPet, isMelee)
-    local text
-    local icon = self.db.global.style.iconStyle
-
-    if (icon ~= "only") then
-        -- color text
-        text = self:TextWithColor(self:FormatNumber(amount), school, isPet, isMelee)
-
-        -- add icons
-        if (icon ~= "none" and spellID) then
-			local iconText = "|T"..GetSpellTexture(spellID)..":0|t"
-
-			if (icon == "both") then
-				text = iconText..text..iconText
-			elseif (icon == "left") then
-				text = iconText..text
-			else -- if (icon == "right") then
-				text = text..iconText
-			end
-        end
-    else
-        -- showing only icons
-        if (not spellID) then
-            return
-        end
-
-        text = "|T"..GetSpellTexture(spellID)..":0|t"
-    end
-
-    self:DisplayText(guid, text, crit, isPet, isMelee)
-end
-
-function ClassicNFCT:MissEvent(guid, spellID, spellSchool, missType, isPet, isMelee)
-    local icon = self.db.global.style.iconStyle
-    
-    if (icon == "only") then
-        return
-    end
-    
-    local text = self:TextWithColor(self.L.MISS_EVENT_STRINGS[missType], spellSchool, isPet, isMelee)
-
-    -- add icons
-    if (icon ~= "none" and spellID) then
-        local iconText = "|T"..GetSpellTexture(spellID)..":0|t"
-
-        if (icon == "both") then
-            text = iconText..text..iconText
-        elseif (icon == "left") then
-            text = iconText..text
-        else -- if (icon == "right") then
-            text = text..iconText
-        end
-    end
-
-    self:DisplayText(guid, text, false, isPet, isMelee)
-end
-
 function ClassicNFCT:GetNamePlateForGUID(guid)
     local unit, nameplate
     repeat
@@ -250,16 +192,4 @@ function ClassicNFCT:GetNamePlateForGUID(guid)
         end
     until true
     return unit, nameplate
-end
-
-function ClassicNFCT:GetAttackableNamePlateTargetGUID()
-    local targetGUID = UnitGUID("target")
-    for unit, guid in unitToGuid:iter() do
-        if guid == targetGUID then
-            if UnitIsDead(unit) or not UnitCanAttack("player", "target") then return end
-            local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
-            if not nameplate or not nameplate:IsShown() then return end
-            return guid
-        end
-    end
 end

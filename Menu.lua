@@ -1,8 +1,12 @@
+local AceConfigDialog = LibStub("AceConfigDialog-3.0")
+
+local name = 'ClassicNFCT'
+
 function ClassicNFCT:CreateMenu()
     local L = self.L
 
     local menu = {
-        name = "ClassicNFCT",
+        name = name,
         handler = self,
         type = 'group',
     }
@@ -81,7 +85,7 @@ function ClassicNFCT:CreateMenu()
                 desc = "",
                 get = function() return self.db.global.font.flag end,
                 set = function(_, newValue) self.db.global.font.flag = newValue end,
-                values = L.fontStyles,
+                values = L.FONT_STYLES,
                 order = 2,
             },
             size = {
@@ -114,7 +118,7 @@ function ClassicNFCT:CreateMenu()
             distance = {
                 type = 'range',
                 name = L.UI["Vertical Distance"],
-                desc = L.UI["Vertical Distance of Text Starting from NamePlate"],
+                desc = L.UI["Vertical distance of text starting from nameplate"],
                 min = -100,
                 max = 100,
                 step = .01,
@@ -184,7 +188,7 @@ function ClassicNFCT:CreateMenu()
             spellBlacklist = {
                 type = 'input',
                 name = L.UI["Spell Blacklist"],
-                desc = L.UI["Spell ID or Name Seperated by Vertical bar (|)\nSpecial tags: spell|melee|pet|pet_spell|pet_melee"],
+                desc = L.UI["Spell ID or name seperated by vertical bar (|)\nSpecial tags: spell|melee|pet|pet_spell|pet_melee"],
                 multiline = 3,
                 get = function() return self.db.global.filter.spellBlacklist end,
                 set = function(_, newValue) self:SetSpellBlacklistToDB(newValue) end,
@@ -211,6 +215,13 @@ function ClassicNFCT:CreateMenu()
                 set = function(_, newValue) self.db.global.filter.ignoreNoDmg = newValue end,
                 order = 3,
             },
+            sumSameSpell = {
+                type = 'toggle',
+                name = L.UI["Sum the same spell amount"],
+                get = function() return self.db.global.filter.sumSameSpell end,
+                set = function(_, newValue) self.db.global.filter.sumSameSpell = newValue end,
+                order = 4,
+            },
         }
     }
 
@@ -231,7 +242,7 @@ function ClassicNFCT:CreateMenu()
                 end,
                 order = 1,
             },
-            perOffTarget = {
+            offTargets = {
                 type = 'input',
                 name = L.UI["Count of Not-Targeting"],
                 desc = L.UI["0 means no limit"],
@@ -267,7 +278,7 @@ function ClassicNFCT:CreateMenu()
             numStyle = {
                 type = "select",
                 name = L.UI["Number Style"],
-                values = L.numStyles,
+                values = L.NUM_STYLES,
                 get = function() return self.db.global.style.numStyle end,
                 set = function(_, newValue) self.db.global.style.numStyle = newValue end,
                 order = 1,
@@ -278,7 +289,7 @@ function ClassicNFCT:CreateMenu()
                 desc = "",
                 get = function() return self.db.global.style.iconStyle end,
                 set = function(_, newValue) self.db.global.style.iconStyle = newValue end,
-                values = L.iconStyles,
+                values = L.ICON_STYLES,
                 order = 2,
             },
             dmgTypeColor = {
@@ -314,7 +325,7 @@ function ClassicNFCT:CreateMenu()
             petScale = {
                 type = 'range',
                 name = L.UI["Pet Text Scale"],
-                desc = L.UI["Scale based on Target"],
+                desc = L.UI["Scale based on target"],
                 min = .01,
                 max = 5,
                 step = .01,
@@ -326,7 +337,7 @@ function ClassicNFCT:CreateMenu()
             autoAttackScale = {
                 type = 'range',
                 name = L.UI["Auto-Attack Text Scale"],
-                desc = L.UI["Scale based on Target"],
+                desc = L.UI["Scale based on target"],
                 min = .01,
                 max = 5,
                 step = .01,
@@ -408,10 +419,8 @@ function ClassicNFCT:CreateMenu()
         },
     }
 
-    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("ClassicNFCT", menu)
-    self.menu = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("ClassicNFCT", "ClassicNFCT")
+    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(name, menu)
+    self.menu = AceConfigDialog:AddToBlizOptions(name, name)
 end
 
-function ClassicNFCT:OpenMenu()
-    InterfaceOptionsFrame_OpenToCategory(self.menu)
-end
+function ClassicNFCT:OpenMenu() AceConfigDialog:Open(name) end

@@ -1,12 +1,6 @@
 local SharedMedia = LibStub("LibSharedMedia-3.0")
 
-local truncateWords = {"", "K", "M", "B"}
-
-local fontPath, fontName, fontFlag, fontSize
-local fontVersion, fontTest
-local cache, frame, sortIndex
-
-local fmtConcat = {}
+local TRUNCATE_WORDS = {"", "K", "M", "B"}
 
 local SCHOOL_MASK_PHYSICAL = 2 ^ 0
 local SCHOOL_MASK_HOLY = 2 ^ 1
@@ -28,10 +22,16 @@ local DAMAGE_TYPE_COLORS = {
 
 local DAMAGE_TYPE_COLORS_SIMPLE = {
     ["spell"] = "FFFF00",
-	["melee"] = "FFFFFF",
+    ["melee"] = "FFFFFF",
     ["pet_spell"] = "CC8400",
     ["pet_melee"] = "CCCCCC",
 }
+
+local fontPath, fontName, fontFlag, fontSize
+local fontVersion, fontTest
+local cache, frame
+
+local fmtConcat = {}
 
 function ClassicNFCT:CreateText()
     frame = CreateFrame("Frame", nil, UIParent)
@@ -40,20 +40,15 @@ function ClassicNFCT:CreateText()
         fontString:SetParent(frame)
         -- fontString:SetIgnoreParentScale(false)
         fontString:SetIgnoreParentAlpha(true)
-        fontString.ClassicNFCT = { version = self:CreateBigInt(), sortIndex = self:CreateBigInt() }
         return fontString
     end)
-    sortIndex = self:CreateBigInt()
-    self.fontStringSorter = function(a, b)
-        return a.ClassicNFCT.sortIndex:compare(b.ClassicNFCT.sortIndex) < 0 
-    end
     fontVersion = self:CreateBigInt()
     fontTest = cache:get()
     fontTest:SetAlpha(0)
     fontTest:Hide()
 end
 
-function ClassicNFCT:GetFontString(guid, text)
+function ClassicNFCT:GetFontString(record)
     local newFontName, newFontFlag, newFontSize = self.db.global.font.choice, self.db.global.font.flag, self.db.global.font.size
     if (newFontName ~= fontName or newFontFlag ~= fontFlag or newFontSize ~= fontSize) then
         local newFontPath = SharedMedia:Fetch("font", newFontName)
@@ -64,13 +59,11 @@ function ClassicNFCT:GetFontString(guid, text)
     end
 
     local fontString = cache:get()
-    local record = fontString.ClassicNFCT
-    if record.version:compare(fontVersion) ~= 0 then
+    if record.fontVersion:compare(fontVersion) ~= 0 then
         fontString:SetFont(fontPath, fontSize, fontFlag)
-        record.version:copy(fontVersion)
+        record.fontVersion:copy(fontVersion)
     end
-    
-    fontString:SetText(text)
+
     fontString:SetAlpha(1)
     fontString:SetScale(1)
     if self.db.global.font.shadow then
@@ -78,23 +71,20 @@ function ClassicNFCT:GetFontString(guid, text)
     else
         fontString:SetShadowOffset(0, 0)
     end
-    fontString:Show()
-    
-    sortIndex:increment()
-    record.sortIndex:copy(sortIndex)
-    record.guid = guid
-    record.startTime = GetTime()
-    record.textWidth = fontString:GetUnboundedStringWidth()
 
-    return fontString
+    record.fontString = fontString
 end
 
-function ClassicNFCT:RecycleFontString(fontString)
+function ClassicNFCT:RecycleFontString(record)
+    local fontString = record.fontString
+    if not fontString then return end
     fontString:SetAlpha(0)
     fontString:ClearAllPoints()
     fontString:SetParent(frame)
     fontString:Hide()
     cache:release(fontString)
+    record.fontString = nil
+    record.fontVersion:reset()
 end
 
 function ClassicNFCT:TextWithColor(text, school, isPet, isMelee)
@@ -127,15 +117,15 @@ end
 
 function ClassicNFCT:FormatNumber(amount)
     local fmtStyle = self.db.global.style.numStyle
-    
+
     if fmtStyle == "disable" then return tostring(amount) end
-    
+
     local abs = math.abs(amount)
     local sym = amount >= 0 and "" or "-"
-    
+
     if fmtStyle == "truncate" then
         local idx = 1
-        local truncLen = #truncateWords
+        local truncLen = #TRUNCATE_WORDS
         while abs >= 1000 do
             idx = idx + 1
             if idx < truncLen and abs >= 1000 then
@@ -144,7 +134,7 @@ function ClassicNFCT:FormatNumber(amount)
                 break
             end
         end
-        local word = truncateWords[idx]
+        local word = TRUNCATE_WORDS[idx]
         local text
         if idx == 1 then
             text = tostring(abs)
@@ -159,7 +149,7 @@ function ClassicNFCT:FormatNumber(amount)
         end
         return sym .. text .. word
     end
-    
+
     -- if fmtStyle == "commaSep" then
         local remain = abs % 1000
         wipe(fmtConcat)

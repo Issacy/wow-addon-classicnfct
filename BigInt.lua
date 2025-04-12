@@ -43,5 +43,9 @@ function ClassicNFCT:CreateBigInt()
         end
         return 0
     end
+    function bi:reset()
+        wipe(self.vals)
+        self.vals[1] = 0
+    end
     return bi
 end

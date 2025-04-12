@@ -12,14 +12,15 @@ Special thanks for the inspiration from: [Nameplate Scrolling Combat Text](https
   * line height
   * on-screen text position
 * Damage Filter:
-  * Spell blacklist
+  * spell blacklist
   * min damage filter
   * ignore no-damage (miss, etc.)
+  * sum the same spell damage amount
 * Optional count limitation of combat texts, for better performance
 * Change style:
-  * Number format style, add (or only) icon
-  * Colored by damage type
-  * Scale & alpha, additional options for pet/auto-attack/not-targeting/on-screen
+  * number format style, add icon
+  * colored by damage type
+  * scale & alpha, additional options for pet/auto-attack/not-targeting/on-screen
 
 ### Change Logs:
 

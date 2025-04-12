@@ -1,25 +1,24 @@
 --[[
-	Russian Localization
+    Russian Localization
 --]]
 
 local L = LibStub('AceLocale-3.0'):NewLocale("ClassicNFCT", 'ruRU')
 if not L then return end
 
-L.numStyles = {
+L.NUM_STYLES = {
     ["truncate"] = "Обрезать",
-    ["commaSep"] = "Разделенные запятой",
+    ["commaSep"] = "Разделитель тысяч",
     ["disable"] = "Отключить",
 }
 
-L.iconStyles = {
+L.ICON_STYLES = {
     ["none"] = "Без значков",
     ["left"] = "Левая сторона",
     ["right"] = "Правая сторона",
     ["both"] = "Обе стороны",
-    ["only"] = "Только значки (без текста)",
 };
 
-L.fontStyles = {
+L.FONT_STYLES = {
     [""] = "Нет",
     ["OUTLINE"] = "Контур",
     ["THICKOUTLINE"] = "Толстый контур",
@@ -42,15 +41,15 @@ L.MISS_EVENT_STRINGS = {
 };
 
 L.UI = {
-	["Enable"] = "Включено",
-	["If the addon is enabled"] = "Если аддон включен",
-	["Disable Blizzard FCT"] = "Отключить Blizzard FCT",
-	["Animations"] = "Анимации",
-	["Font"] = "Шрифт",
-	["Vertical Distance"] = "Вертикальное расстояние",
-	["Vertical Distance of Text Starting from NamePlate"] = "Вертикальное расстояние текста от иконки персонажа",
-	["Icon"] = "Значок",
-	["Scale"] = "Масштаб",
+    ["Enable"] = "Включено",
+    ["If the addon is enabled"] = "Если аддон включен",
+    ["Disable Blizzard FCT"] = "Отключить Blizzard FCT",
+    ["Animations"] = "Анимации",
+    ["Font"] = "Шрифт",
+    ["Vertical Distance"] = "Вертикальное расстояние",
+    ["Vertical distance of text starting from nameplate"] = "Вертикальное расстояние текста от иконки персонажа",
+    ["Icon"] = "Значок",
+    ["Scale"] = "Масштаб",
     ["Alpha"] = "Прозрачность",
     ["Pet Text Scale"] = "Масштаб текста для пета",
     ["Auto-Attack Text Scale"] = "Масштаб текста автоатаки",

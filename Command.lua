@@ -1,6 +1,8 @@
+local _
+
 function ClassicNFCT:CreateCmd()
     local L = self.L
-    
+
     local cmds
     cmds = {
         {
@@ -42,8 +44,8 @@ function ClassicNFCT:CreateCmd()
 
     self.cmds = {}
     for _, v in ipairs(cmds) do self.cmds[v.cmd] = v.func end
-    
-    print(L.CMD["Classic Nameplate-based Floating Combat Text Command Help: /cnfct help"])
+
+    print(L.CMD["Classic Nameplate Floating Combat Text Command Help: /cnfct help"])
 
     -- setup chat commands
     self:RegisterChatCommand("cnfct", "OnCommand")

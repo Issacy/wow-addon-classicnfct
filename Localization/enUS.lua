@@ -1,24 +1,23 @@
 --[[
-	English Localization (default)
+    English Localization (default)
 --]]
 
-local L = LibStub('AceLocale-3.0'):NewLocale("ClassicNFCT", 'enUS', true, 'raw')
+local L = LibStub('AceLocale-3.0'):NewLocale("ClassicNFCT", 'enUS', true, true)
 
-L.numStyles = {
+L.NUM_STYLES = {
     ["truncate"] = "Truncate",
     ["commaSep"] = "Thousands Separator",
     ["disable"] = "Disable",
 }
 
-L.iconStyles = {
+L.ICON_STYLES = {
     ["none"] = "No Icons",
     ["left"] = "Left Side",
     ["right"] = "Right Side",
     ["both"] = "Both Sides",
-    ["only"] = "Icons Only (No Text)",
 };
 
-L.fontStyles = {
+L.FONT_STYLES = {
     [""] = "None",
     ["OUTLINE"] = "Outline",
     ["THICKOUTLINE"] = "Thick Outline",

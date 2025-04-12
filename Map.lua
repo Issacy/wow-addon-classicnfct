@@ -2,7 +2,7 @@ local cache
 
 function ClassicNFCT:CreateMap()
     if not cache then cache = self:CreatePool(function() return {} end) end
-    
+
     local inner = {len = 0, cnt = 0, index = {}, container = {}, version = 0}
     local map = {}
 
