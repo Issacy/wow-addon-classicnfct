@@ -22,7 +22,6 @@ local LAYER_SUBLEVEL_CRIT = -3
 
 local LibEasing = LibStub("LibEasing-1.0")
 
-local sortIndex
 local screenHeight
 local animCache, lineCache, refCache, recordCache
 local wildAnim, wildFrame
@@ -30,13 +29,22 @@ local guidToAnim, animUpdateFunc
 local wilds, refs, frame
 local now = 0
 
-local function RecordSorter(a, b) return a.sortIndex:compare(b.sortIndex) < 0 end
+local function TrimList(l, len)
+    local newLen = 0
+    for i = 1, len do
+        local v = l[i]
+        if v ~= nil then
+            newLen = newLen + 1
+            l[i] = nil
+            l[newLen] = v
+        end
+    end
+end
 
 function ClassicNFCT:CreateAnimation()
-    sortIndex = self:CreateBigInt()
     animCache = self:CreatePool(function() return self:CreateAnimationGroup() end)
-    refCache = self:CreatePool(function() return { map = {}, sorted = {} } end)
-    recordCache = self:CreatePool(function() return { fontVersion = self:CreateBigInt(), sortIndex = self:CreateBigInt() } end)
+    refCache = self:CreatePool(function() return { map = {}, list = {} } end)
+    recordCache = self:CreatePool(function() return { fontVersion = self:CreateBigInt() } end)
     guidToAnim = self:CreateMap()
     wilds = refCache:get()
     refs = self:CreateMap()
@@ -56,13 +64,32 @@ function ClassicNFCT:ClearAnimation()
     end
     guidToAnim:clear()
     for _, ref in refs:iter() do
-        for _, record in ipairs(ref.sorted) do self:RecycleRecord(record) end
-        wipe(ref.map)
-        wipe(ref.sorted)
+        self:ClearRef(ref)
         refCache:release(ref)
     end
     refs:clear()
-    self:ClearWilds()
+
+    wildAnim:clear()
+    self:ClearRef(wilds)
+end
+
+function ClassicNFCT:ClearRefs()
+    for _, anim in guidToAnim:iter() do
+        anim:clear()
+        animCache:release(anim)
+    end
+    guidToAnim:clear()
+    for _, ref in refs:iter() do
+        self:ClearRef(ref)
+        refCache:release(ref)
+    end
+    refs:clear()
+end
+
+function ClassicNFCT:ClearRef(ref)
+    for _, record in pairs(ref.list) do self:RecycleRecord(record) end
+    wipe(ref.map)
+    wipe(ref.list)
 end
 
 function ClassicNFCT:CreateAnimationGroup()
@@ -133,7 +160,7 @@ function ClassicNFCT:CreateAnimationGroup()
         end
 
         -- prev: down side top -> bottom left & right most
-        -- now: bottom left & right most -> down side top 
+        -- now: bottom left & right most -> down side top
         -- for i = dn, 1, -1 do
         for i = 1, dn do
             line = self.down[i]
@@ -179,6 +206,8 @@ function ClassicNFCT:CreateAnimationGroup()
     end
 
     function inner:animate(record, targetGUID, onScreen)
+        if not record.fontString then return false end
+
         local targetStyle = 0
         if not onScreen then
             if (targetGUID ~= record.guid and this.db.global.style.useOffTarget) then
@@ -224,13 +253,19 @@ function ClassicNFCT:CreateAnimationGroup()
             local moveUp = this.db.global.layout.lineHeight
             record.offsetY = LibEasing.Linear(record.elapsed, moveUp * ANIMATION_VERTICAL_OFFSET_PERCENT, moveUp, record.duration)
         end
+
+        return true
     end
 
     function inner:updateLR(lr, targetGUID, onScreen)
-        for i = #lr, 1, -1 do
+        local len = #lr
+        for i = len, 1, -1 do
             local record = lr[i]
-            self:animate(record, targetGUID, onScreen)
+            if not self:animate(record, targetGUID, onScreen) then
+                lr[i] = nil
+            end
         end
+        TrimList(lr, len)
     end
 
     function inner:updateLine(line, targetGUID, onScreen)
@@ -238,15 +273,35 @@ function ClassicNFCT:CreateAnimationGroup()
         self:updateLR(line.right, targetGUID, onScreen)
 
         local record = line.center
-        if not record then return end
-        self:animate(record, targetGUID, onScreen)
+        if not record or self:animate(record, targetGUID, onScreen) then return end
+        local ln, rn = #line.left, #line.right
+        if ln == 0 or rn == 0 then
+            line.center = nil
+        else
+            line.center = table.remove(ln >= rn and line.left or line.right, 1)
+        end
     end
 
     function inner:updateUD(lines, targetGUID, onScreen)
-        for i = #lines, 1, -1 do
+        local len = #lines
+        for i = len, 1, -1 do
             local line = lines[i]
             self:updateLine(line, targetGUID, onScreen)
+            if not line.center then
+                lineCache:release(line)
+                lines[i] = nil
+            end
         end
+        TrimList(lines, len)
+    end
+
+    function inner:updateMiddle(targetGUID, onScreen)
+        self:updateLine(self.middle, targetGUID, onScreen)
+        if self.middle.center then return end
+        local un, dn = #self.up, #self.down
+        if un == 0 and dn == 0 then return end
+        lineCache:release(self.middle)
+        self.middle = table.remove(un > dn and self.up or self.down, 1)
     end
 
     function inner:layoutOne(record, nameplate, onScreen)
@@ -317,7 +372,7 @@ function ClassicNFCT:CreateAnimationGroup()
     function anim:update(nameplate, targetGUID, onScreen)
         inner:updateUD(inner.up, targetGUID, onScreen)
         inner:updateUD(inner.down, targetGUID, onScreen)
-        inner:updateLine(inner.middle, targetGUID, onScreen)
+        inner:updateMiddle(targetGUID, onScreen)
 
         inner:layoutLine(inner.middle, 0, nameplate, onScreen)
         local lineHeight = this.db.global.layout.lineHeight + ANIMATION_VERTICAL_PADDING
@@ -331,7 +386,7 @@ function ClassicNFCT:CreateAnimationGroup()
 
     function anim:add(record)
         if not this:GenerateText(record) then return end
-        
+
         inner.count = inner.count + 1
         record.width = record.textWidth * record.scale
 
@@ -383,13 +438,6 @@ function ClassicNFCT:CreateAnimationGroup()
     return anim
 end
 
-function ClassicNFCT:GetRecord()
-    local record = recordCache:get()
-    sortIndex:increment()
-    record.sortIndex:copy(sortIndex)
-    return record
-end
-
 function ClassicNFCT:RecycleRecord(record)
     record.key = nil
     record.text = nil
@@ -435,60 +483,24 @@ function ClassicNFCT:InitRecord(record, guid, spellID, amount, missType, school,
     record.duration = self.db.global.animations.animationDuration
 end
 
-function ClassicNFCT:MergeRecord(recordA, recordB)
-    local later = recordA.eventTime < recordB.eventTime
-    if later then
-        recordA.school = recordB.school
-        recordA.eventTime = recordB.eventTime
-        recordA.elapsed = now - recordA.eventTime
-        recordA.crit = recordB.crit
-        recordA.critTime = recordB.critTime
-        recordA.critElapsed = now - recordA.critTime
-        if recordA.missType and recordB.missType then
-            recordA.missType = recordB.missType
-        end
-    end
-    recordA.hits = recordA.hits + recordB.hits
-    recordA.amount = recordA.amount + recordB.amount
-    recordA.crits = recordA.crits + recordB.crits
-    recordA.text = nil
-
-    self:RecycleFontString(recordB)
-    recordB.fontString = nil
-end
-
-function ClassicNFCT:CopyRecord(recordA, recordB)
-    recordA.sortIndex:copy(recordB.sortIndex)
-    recordA.guid = recordB.guid
-    recordA.spellID = recordB.spellID
-    recordA.school = recordB.school
-    recordA.eventTime = recordB.eventTime
-    recordA.elapsed = now - recordA.eventTime
-    recordA.hits = recordB.hits
-    recordA.amount = recordB.amount
-    recordA.missType = recordB.missType
-    recordA.critTime = recordB.critTime
-    recordA.critElapsed = now - recordA.critTime
-    recordA.crits = recordB.crits
-    recordA.pet = recordB.pet
-    recordA.melee = recordB.melee
-    recordA.scale = recordB.scale
-    recordA.duration = recordB.duration
-    recordA.text = recordB.text
-
-    self:RecycleFontString(recordB)
-    recordB.fontString = nil
-end
-
 function ClassicNFCT:DamageText(guid, spellID, amount, missType, school, crit, isPet, isMelee)
     now = GetTime()
 
-    local ref = refs:at(guid)
-    if not ref then
-        ref = refCache:get()
-        refs:emplace(guid, ref)
+    local anim, ref
+    if self.db.global.layout.alwaysOnScreen or not self:GetNamePlateForGUID(guid) then
+        anim, ref = wildAnim, wilds
+    else
+        ref = refs:at(guid)
+        if not ref then
+            ref = refCache:get()
+            refs:emplace(guid, ref)
+        end
+        anim = guidToAnim:at(guid)
+        if not anim then
+            anim = animCache:get()
+            guidToAnim:emplace(guid, anim)
+        end
     end
-    ref.dirty = true
 
     local record
     if self.db.global.filter.sumSameSpell then
@@ -496,18 +508,20 @@ function ClassicNFCT:DamageText(guid, spellID, amount, missType, school, crit, i
         if isPet then key = 'P@' .. key end
         record = ref.map[key]
         if not record then
-            record = self:GetRecord()
+            record = recordCache:get()
             record.key = key
             ref.map[key] = record
             self:InitRecord(record, guid, spellID, amount, missType, school, crit, isPet, isMelee)
-            table.insert(ref.sorted, record)
+            table.insert(ref.list, record)
+            anim:add(record)
         else
             self:UpdateRecord(record, amount, missType, school, crit)
         end
     else
-        record = self:GetRecord()
+        record = recordCache:get()
         self:InitRecord(record, guid, spellID, amount, missType, school, crit, isPet, isMelee)
-        table.insert(ref.sorted, record)
+        table.insert(ref.list, record)
+        anim:add(record)
     end
 
     local func = frame:GetScript("OnUpdate")
@@ -553,131 +567,52 @@ function ClassicNFCT:GenerateText(record)
     return true
 end
 
-function ClassicNFCT:ClearWilds()
-    for _, record in ipairs(wilds.sorted) do
-        self:RecycleRecord(record)
+function ClassicNFCT:CountDown(ref)
+    local len = #ref.list
+    for i = len, 1, -1 do
+        local record = ref.list[i]
+        record.elapsed = now - record.eventTime
+        record.critElapsed = now - record.critTime
+        if record.elapsed > self.db.global.animations.animationDuration then
+            ref.list[i] = nil
+            if record.key then ref.map[record.key] = nil end
+            self:RecycleRecord(record)
+        end
     end
-    wipe(wilds.map)
-    wipe(wilds.sorted)
-    wilds.dirty = false
-    wildAnim:clear()
+    TrimList(ref.list, len)
 end
 
 function ClassicNFCT:UpdateWilds()
-    if not wilds.dirty then return end
-    table.sort(wilds.sorted, RecordSorter)
-    for _, record in ipairs(wilds.sorted) do wildAnim:add(record) end
+    self:CountDown(wilds)
     wildAnim:update(wildFrame, nil, true)
-    wilds.dirty = false
-end
-
-function ClassicNFCT:AddWild(record)
-    if self.db.global.filter.sumSameSpell then
-        local key = record.key
-        if not key then
-            key = record.spellID or 0
-            if record.pet then key = 'P@' .. key end
-        end
-        local wildRecord = wilds.map[key]
-        if not wildRecord then
-            wildRecord = self:GetRecord()
-            wildRecord.key = key
-            wilds.map[key] = wildRecord
-            self:CopyRecord(wildRecord, record)
-            table.insert(wilds.sorted, wildRecord)
-        else
-            self:MergeRecord(wildRecord, record)
-        end
-    else
-        local wildRecord = self:GetRecord()
-        self:CopyRecord(wildRecord, record)
-        table.insert(wilds.sorted, wildRecord)
-    end
-    wilds.dirty = true
 end
 
 function ClassicNFCT:AnimateUpdate_OnScreenOnly()
-    self:ClearWilds()
-
-    for guid, anim in guidToAnim:iter() do
-        animCache:release(guidToAnim:remove(guid, false))
-    end
-    guidToAnim:trim()
-
-    for guid, ref in refs:iter() do
-        for i = #ref.sorted, 1, -1 do
-            local record = ref.sorted[i]
-            record.elapsed = now - record.eventTime
-            record.critElapsed = now - record.critTime
-            if record.elapsed > self.db.global.animations.animationDuration then
-                table.remove(ref.sorted, i)
-                if record.key then ref.map[record.key] = nil end
-                self:RecycleRecord(record)
-            else
-                self:AddWild(record)
-            end
-        end
-        if #ref.sorted == 0 then
-            refCache:release(refs:remove(guid, false))
-        end
-    end
-    refs:trim()
-
+    self:ClearRefs()
     self:UpdateWilds()
 end
 
 function ClassicNFCT:AnimateUpdate_NameplateBased()
-    self:ClearWilds()
-
-    for guid, anim in guidToAnim:iter() do
-        anim:clear()
-        local _, nameplate = self:GetNamePlateForGUID(guid)
-        if not nameplate then
-            animCache:release(guidToAnim:remove(guid, false))
-        end
-    end
-    guidToAnim:trim()
-
-    for guid, ref in refs:iter() do
-        for i = #ref.sorted, 1, -1 do
-            local record = ref.sorted[i]
-            record.elapsed = now - record.eventTime
-            record.critElapsed = now - record.critTime
-            if record.elapsed > self.db.global.animations.animationDuration then
-                table.remove(ref.sorted, i)
-                if record.key then ref.map[record.key] = nil end
-                self:RecycleRecord(record)
-            end
-        end
-        if #ref.sorted == 0 then
-            refCache:release(refs:remove(guid, false))
-        elseif ref.dirty then
-            table.sort(ref.sorted, RecordSorter)
-            ref.dirty = false
-        end
-    end
-    refs:trim()
-
     local targetGUID = UnitGUID('target')
 
     for guid, ref in refs:iter() do
-        local anim
-        local _, nameplate = self:GetNamePlateForGUID(guid)
-        if nameplate then
-            anim = guidToAnim:at(guid)
-            if not anim then
-                anim = self:CreateAnimationGroup()
-                guidToAnim:emplace(guid, anim)
-            end
-        end
+        local nameplate = self:GetNamePlateForGUID(guid)
+        local anim = guidToAnim:at(guid)
+        if not nameplate then
+            refs:remove(guid, false)
+            self:ClearRef(ref)
+            refCache:release(ref)
 
-        if not anim then
-            for _, record in ipairs(ref.sorted) do self:AddWild(record) end
+            guidToAnim:remove(guid, false)
+            anim:clear()
+            animCache:release(anim)
         else
-            for _, record in ipairs(ref.sorted) do anim:add(record) end
+            self:CountDown(ref)
             anim:update(nameplate, targetGUID, false)
         end
     end
+    refs:trim()
+    guidToAnim:trim()
 
     self:UpdateWilds()
 end

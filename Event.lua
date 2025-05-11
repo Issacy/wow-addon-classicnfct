@@ -191,5 +191,5 @@ function ClassicNFCT:GetNamePlateForGUID(guid)
             nameplate = nil
         end
     until true
-    return unit, nameplate
+    return nameplate
 end

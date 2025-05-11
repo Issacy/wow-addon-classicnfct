@@ -2,6 +2,8 @@
 
 * Add optional count limitation of combat texts, when dealing damage to a large number of enemies, it should help prevent lag
 * Can optionally sum the same spell damage amount
+* More stable damage text layout
+* For performance reason, when a nameplate disappears, damage texts which has been layout on it WILL ALSO disappear (originally they will be re-layout on screen)
 
 #### 2.13:
 
