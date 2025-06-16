@@ -4,23 +4,23 @@ Special thanks for the inspiration from: [Nameplate Scrolling Combat Text](https
 
 ### Options:
 
-* Disable Blizzard floating combat text
-* Change animation duration
-* Change font, font-style, font-size, font-shadow
-* Change layout:
-  * vertical distance of nameplate
-  * line height
-  * on-screen text position
-* Damage Filter:
-  * spell blacklist
-  * min damage filter
-  * ignore no-damage (miss, etc.)
-  * sum the same spell damage amount
-* Optional count limitation of combat texts, for better performance
-* Change style:
-  * number format style, add icon
-  * colored by damage type
-  * scale & alpha, additional options for pet/auto-attack/not-targeting/on-screen
+- Disable Blizzard floating combat text
+- Change animation duration
+- Change font, font-style, font-size, font-shadow
+- Change layout:
+  - vertical distance of nameplate
+  - line height
+  - on-screen text position
+- Damage Filter:
+  - spell blacklist
+  - min damage filter
+  - ignore no-damage (miss, etc.)
+  - sum the same spell damage amount
+- Optional count limitation of combat texts, for better performance
+- Change style:
+  - number format style, add icon
+  - colored by damage type
+  - scale & alpha, additional options for pet/auto-attack/not-targeting/on-screen
 
 ### Change Logs:
 
@@ -31,3 +31,5 @@ Special thanks for the inspiration from: [Nameplate Scrolling Combat Text](https
 Because of addon limitations, I cannot know nameplate's screen position, miss many informations like out of screen, moving speed.
 
 Welcome for posting any solution or pulling request for this.
+
+根据个人习惯修改万分位截断显示，同时修改插件名称针对更新工具，感谢原作者的付出

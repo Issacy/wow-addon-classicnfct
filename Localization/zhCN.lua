@@ -9,6 +9,7 @@ L.NUM_STYLES = {
     ["truncate"] = "缩短",
     ["commaSep"] = "千分位",
     ["disable"] = "无",
+    ["truncateCN"] = "中文缩短", 
 }
 
 L.ICON_STYLES = {
