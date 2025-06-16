@@ -1,6 +1,7 @@
 local SharedMedia = LibStub("LibSharedMedia-3.0")
 
 local TRUNCATE_WORDS = {"", "K", "M", "B"}
+local TRUNCATE_WORDS_CN = {"", "万", "亿", "兆"}
 
 local SCHOOL_MASK_PHYSICAL = 2 ^ 0
 local SCHOOL_MASK_HOLY = 2 ^ 1
@@ -122,6 +123,33 @@ function ClassicNFCT:FormatNumber(amount)
 
     local abs = math.abs(amount)
     local sym = amount >= 0 and "" or "-"
+
+    if fmtStyle == "truncateCN" then
+        local idx = 1
+        local truncLen = #TRUNCATE_WORDS_CN
+        while abs >= 10000 do
+            idx = idx + 1
+            if idx < truncLen and abs >= 10000 then
+                abs = abs / 10000
+            else
+                break
+            end
+        end
+        local word = TRUNCATE_WORDS_CN[idx]
+        local text
+        if idx == 1 then
+            text = tostring(abs)
+        else
+            text = string.format("%.2f", abs)
+            local textLen = text:len()
+            if textLen >= 6 then
+                text = text:sub(1, -4)
+            elseif textLen == 5 then
+                text = text:sub(1, -2)
+            end
+        end
+        return sym .. text .. word
+    end
 
     if fmtStyle == "truncate" then
         local idx = 1

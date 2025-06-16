@@ -539,7 +539,7 @@ function ClassicNFCT:GenerateText(record)
         text = self:TextWithColor(text, record.school, record.pet, record.melee)
 
         local icon = self.db.global.style.iconStyle
-        if icon ~= "none" then
+        if icon ~= "none" and record.spellID then
             local iconText = "|T"..C_Spell.GetSpellTexture(record.spellID)..":0|t"
             if (icon == "both") then
                 text = iconText..text..iconText
