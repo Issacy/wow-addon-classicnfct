@@ -31,5 +31,3 @@ Special thanks for the inspiration from: [Nameplate Scrolling Combat Text](https
 Because of addon limitations, I cannot know nameplate's screen position, miss many informations like out of screen, moving speed.
 
 Welcome for posting any solution or pulling request for this.
-
-根据个人习惯修改万分位截断显示，同时修改插件名称针对更新工具，感谢原作者的付出
