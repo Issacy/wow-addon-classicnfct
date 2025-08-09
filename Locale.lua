@@ -1,5 +1,5 @@
 local function Create(t)
-    return setmetatable(t or {}, { __index = function(t, k) return k end, })
+    return setmetatable(type(t) == "table" and t or {}, { __index = function(t, k) return k end, })
 end
 
 function ClassicNFCT:CreateLocale()

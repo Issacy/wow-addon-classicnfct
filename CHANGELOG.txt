@@ -1,2 +1,1 @@
-* More stable damage text layout
-* For performance reason, when a nameplate disappears, damage texts which has been layout on it WILL ALSO disappear (originally they will be re-layout on screen)
+* Fix lua error in russian client
