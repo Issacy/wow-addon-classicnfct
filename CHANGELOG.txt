@@ -1,1 +1,1 @@
-* Fix lua error in russian client
+* Fix lua error when a damage event does not contains any spell id
