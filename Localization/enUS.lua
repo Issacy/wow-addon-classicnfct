@@ -4,6 +4,11 @@
 
 local L = LibStub('AceLocale-3.0'):NewLocale("ClassicNFCT", 'enUS', true, true)
 
+L.NUM_TRUNCATION = {
+    divider = 1000,
+    words = {"", "K", "M", "B"}
+}
+
 L.NUM_STYLES = {
     ["truncate"] = "Truncate",
     ["commaSep"] = "Thousands Separator",

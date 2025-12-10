@@ -5,6 +5,11 @@
 local L = LibStub('AceLocale-3.0'):NewLocale("ClassicNFCT", 'zhCN')
 if not L then return end
 
+L.NUM_TRUNCATION = {
+    divider = 10000,
+    words = {"", "万", "亿", "兆"}
+}
+
 L.NUM_STYLES = {
     ["truncate"] = "缩短",
     ["commaSep"] = "千分位",
