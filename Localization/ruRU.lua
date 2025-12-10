@@ -7,7 +7,7 @@ if not L then return end
 
 L.NUM_TRUNCATION = {
     divider = 1000,
-    words = {"", "K", "M", "B"}
+    words = {"", "K", "M", "B", "T"}
 }
 
 L.NUM_STYLES = {
