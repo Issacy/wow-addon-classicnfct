@@ -1,7 +1,5 @@
 local SharedMedia = LibStub("LibSharedMedia-3.0")
 
-local TRUNCATE_WORDS = {"", "K", "M", "B"}
-
 local SCHOOL_MASK_PHYSICAL = 2 ^ 0
 local SCHOOL_MASK_HOLY = 2 ^ 1
 local SCHOOL_MASK_FIRE = 2 ^ 2
@@ -123,18 +121,17 @@ function ClassicNFCT:FormatNumber(amount)
     local abs = math.abs(amount)
     local sym = amount >= 0 and "" or "-"
 
+    local divider
     if fmtStyle == "truncate" then
+        local words = self.L.NUM_TRUNCATION.words
+        divider = self.L.NUM_TRUNCATION.divider
+        local wordLen = #words
         local idx = 1
-        local truncLen = #TRUNCATE_WORDS
-        while abs >= 1000 do
+        while abs >= divider and idx < wordLen do
             idx = idx + 1
-            if idx < truncLen and abs >= 1000 then
-                abs = abs / 1000
-            else
-                break
-            end
+            abs = abs / divider
         end
-        local word = TRUNCATE_WORDS[idx]
+        local word = words[idx]
         local text
         if idx == 1 then
             text = tostring(abs)
@@ -151,13 +148,14 @@ function ClassicNFCT:FormatNumber(amount)
     end
 
     -- if fmtStyle == "commaSep" then
-        local remain = abs % 1000
+        divider = 1000
+        local remain = abs % divider
         wipe(fmtConcat)
         fmtConcat[1] = sym
-        fmtConcat[2] = abs >= 1000 and string.format("%03d", remain) or remain
-        while abs >= 1000 do
-            abs = (abs - remain) / 1000
-            remain = abs % 1000
+        fmtConcat[2] = abs >= divider and string.format("%03d", remain) or remain
+        while abs >= divider do
+            abs = (abs - remain) / divider
+            remain = abs % divider
             table.insert(fmtConcat, 2, ",")
             table.insert(fmtConcat, 2, abs >= 1000 and string.format("%03d", remain) or remain)
         end
