@@ -4,6 +4,7 @@
 * Can optionally sum the same spell damage amount
 * More stable damage text layout
 * For performance reason, when a nameplate disappears, damage texts which has been layout on it WILL ALSO disappear (originally they will be re-layout on screen)
+* Change truncate divider from 1000 to 10000 for chinese
 
 #### 2.13:
 
